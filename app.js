@@ -163,8 +163,9 @@ function renderizarCatalogo() {
             <div>
                 <strong>${prod.nombre}</strong> <small>(${prod.id})</small><br>
                 <span class="stock-badge ${
-                  prod.existencia <= minAlerta ? "bajo-stock" : ""
+                  (minAlerta > 0 && prod.existencia <= minAlerta) ? "bajo-stock" : ""
                 }">Stock: ${prod.existencia}</span>
+                
             </div>
             <div class="precios" style="text-align: right;">
                 Costo: $${prod.inversion} | Venta: $${prod.precio}<br>
@@ -457,7 +458,7 @@ async function chequearNotificacionesSilencioso() {
       alertasTPVPendientes = data.data.alertasStockTPV || [];
       
       alertasStockPendientes = catalogoLocal.filter(
-        (prod) => prod.existencia <= (prod.stock_minimo || 0)
+        (prod) => (prod.stock_minimo || 0) > 0 && prod.existencia <= (prod.stock_minimo || 0)
       );
 
       const btnNotificaciones = document.getElementById("btn-notificaciones");
