@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestión de Almacén - TPV</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div id="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p id="loading-text">Procesando...</p>
+    </div>
+
+    <div id="login-screen" class="screen active">
+        <h2>Acceso Almacén Central</h2>
+        <input type="password" id="clave-input" placeholder="Clave de Administrador">
+        <button onclick="iniciarSesion()">Entrar</button>
+    </div>
+
+    <div id="almacen-screen" class="screen">
+        <header>
+            <h3>Panel de Almacén Central</h3>
+            <div class="header-actions">
+                <button onclick="abrirDashboard()" class="btn-success btn-sm">📊 Ver Dashboard</button>
+                <button id="btn-notificaciones" onclick="abrirModalNotificaciones()" class="btn-secondary btn-sm"
+                    style="display:none;">
+                    🔔 Notificaciones <span id="badge-notificaciones" class="badge">0</span>
+                </button>
+                <button onclick="cerrarSesion()" class="btn-secondary btn-sm">🚪 Cerrar Sesión</button>
+            </div>
+        </header>
+
+
+
+
+        <main class="almacen-layout">
+            <section class="panel-izquierdo">
+                <div class="card">
+                    <h4>Transferir a TPV</h4>
+                    <div class="form-group">
+                        <label>Producto a transferir:</label>
+                        <select id="trans-producto"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad:</label>
+                        <input type="number" id="trans-cantidad" min="1" placeholder="Ej. 10">
+                    </div>
+                    <div class="form-group">
+                        <label>Destino:</label>
+                        <select id="trans-destino">
+                            <option value="TPV_1">TPV_1</option>
+                            <option value="TPV_2">TPV_2</option>
+                        </select>
+                    </div>
+                    <button onclick="ejecutarTransferencia()" class="btn-warning">Enviar a TPV</button>
+                </div>
+
+                <div class="card mt-20" style="border-top: 4px solid var(--success-color);">
+                    <h4 style="color: var(--success-color);">📥 Registrar Entrada de Mercancía (Proveedor)</h4>
+                    <p class="subtitle">Aumentar stock por compra o reabastecimiento directo del proveedor</p>
+                
+                    <div class="form-group">
+                        <label>Producto recibido:</label>
+                        <select id="prov-producto"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad recibida:</label>
+                        <input type="number" id="prov-cantidad" min="1" placeholder="Ej. 50">
+                    </div>
+                    <div class="form-group">
+                        <label>Proveedor / Nro. Factura / Nota:</label>
+                        <input type="text" id="prov-motivo" placeholder="Ej. Distribuidor Central - Factura #991">
+                    </div>
+                    <button onclick="ejecutarEntradaProveedor()" class="btn-success" style="margin-top: 5px; width: 100%;">Registrar Entrada de Proveedor</button>
+                </div>
+                
+
+                <div class="card mt-20" style="border-top: 4px solid var(--danger-color);">
+                    <h4 style="color: var(--danger-color);">📉 Registrar Salida / Merma</h4>
+                    <p class="subtitle">Descontar stock por daño, caducidad o ajuste</p>
+
+                    <div class="form-group">
+                        <label>Producto afectado:</label>
+                        <select id="merma-producto"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad a dar de baja:</label>
+                        <input type="number" id="merma-cantidad" min="1" placeholder="Ej. 2">
+                    </div>
+                    <div class="form-group">
+                        <label>Motivo o justificación:</label>
+                        <input type="text" id="merma-motivo" placeholder="Ej. Producto caducado / Dañado">
+                    </div>
+                    <button onclick="ejecutarMerma()" class="btn-warning"
+                        style="background-color: var(--danger-color); color: white;">Registrar Baja Definitiva</button>
+                </div>
+
+
+                <div class="card mt-20">
+                    <h4>Inventario Actual (Almacén)</h4>
+                    <input type="text" id="buscar-producto" placeholder="Buscar..." onkeyup="filtrarCatalogo()">
+                    <div id="catalogo-container" class="inventario-lista">
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel-derecho">
+                <div class="card card-primary">
+                    <h4>Crear Nuevo Producto</h4>
+                    <p class="subtitle">Registrar en la base de datos maestra</p>
+
+                    <div class="form-group">
+                        <label>ID del Producto:</label>
+                        <input type="text" id="prod-id" placeholder="Ej. P001">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre:</label>
+                        <input type="text" id="prod-nombre" placeholder="Ej. Coca Cola 600ml">
+                    </div>
+                    <div class="form-group">
+                        <label>División/Categoría:</label>
+                        <input type="text" id="prod-division" placeholder="Ej. Bebidas">
+                    </div>
+                    <div class="form-group">
+                        <label>Costo (Inversión):</label>
+                        <input type="number" id="prod-inversion" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio de Venta:</label>
+                        <input type="number" id="prod-precio" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Inicial (En Almacén):</label>
+                        <input type="number" id="prod-stock" placeholder="0" min="0">
+                    </div>
+                    <!-- NUEVO CAMPO: Stock Mínimo -->
+                    <div class="form-group">
+                        <label>Stock Mínimo (Alerta):</label>
+                        <input type="number" id="prod-stock-minimo" placeholder="Ej. 5" min="0">
+                    </div>
+
+
+                    <button onclick="crearProducto()" class="btn-success">Guardar Producto</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modal-edicion" class="modal" style="display: none;">
+        <div class="modal-content card">
+            <span class="close" onclick="cerrarModalEdicion()">&times;</span>
+            <h4>Editar Precios</h4>
+            <p id="edit-prod-nombre" class="subtitle" style="font-weight: bold; color: #333;"></p>
+            <input type="hidden" id="edit-prod-id">
+
+            <div class="form-group">
+                <label>Nuevo Costo (Inversión):</label>
+                <input type="number" id="edit-prod-inversion" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Nuevo Precio de Venta:</label>
+                <input type="number" id="edit-prod-precio" step="0.01">
+            </div>
+            <!-- NUEVO CAMPO: Edición de Stock Mínimo -->
+            <div class="form-group">
+                <label>Nuevo Stock Mínimo (Alerta):</label>
+                <input type="number" id="edit-prod-stock-minimo" min="0">
+            </div>
+
+
+            <button onclick="guardarEdicionProducto()" class="btn-success">Guardar Cambios</button>
+        </div>
+    </div>
+
+    <div id="modal-notificaciones" class="modal" style="display: none;">
+        <div class="modal-content card" style="max-width: 600px;">
+            <span class="close" onclick="cerrarModalNotificaciones()">&times;</span>
+            <h4>Transferencias Pendientes</h4>
+            <div id="lista-notificaciones" class="inventario-lista">
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="screen">
+        <header>
+            <h3>📊 Dashboard Global y Eficiencia</h3>
+            <button onclick="cerrarDashboard()" class="btn-secondary">Volver al Almacén</button>
+        </header>
+
+        <main style="padding: 20px;">
+            <!-- NUEVO: Filtros de Fecha -->
+            <!-- REEMPLAZAR ESTA SECCIÓN EN TU HTML -->
+            <div class="card mb-20 filter-card">
+                <div class="filter-header">
+                    <label style="font-weight: bold;">Filtro por Fecha</label>
+                    <div class="filter-shortcuts">
+                        <button onclick="setRangoFecha('hoy')" class="btn-shortcut">Hoy</button>
+                        <button onclick="setRangoFecha('semana')" class="btn-shortcut">Últimos 7 días</button>
+                        <button onclick="setRangoFecha('mes')" class="btn-shortcut">Este Mes</button>
+                    </div>
+                </div>
+                <div class="filter-inputs">
+                    <div class="filter-inputs">
+                        <div class="input-group">
+                            <label for="dash-fecha-inicio">Desde:</label>
+                            <input type="date" id="dash-fecha-inicio"
+                                onchange="validarFechas(); cargarDatosDashboard();">
+                        </div>
+                        <div class="input-group">
+                            <label for="dash-fecha-fin">Hasta:</label>
+                            <input type="date" id="dash-fecha-fin" onchange="validarFechas(); cargarDatosDashboard();">
+                        </div>
+
+                        <!-- NUEVO: Filtro por TPV -->
+                        <div class="input-group">
+                            <label for="dash-tpv">TPV:</label>
+                            <select id="dash-tpv" onchange="cargarDatosDashboard()"
+                                style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                                <option value="">Todos los TPV</option>
+                                <option value="TPV_1">TPV_1</option>
+                                <option value="TPV_2">TPV_2</option>
+                                <option value="Almacen">Almacén</option>
+                            </select>
+                        </div>
+
+                        <!-- NUEVO: Filtro por Producto -->
+                        <div class="input-group">
+                            <label for="dash-producto">Producto:</label>
+                            <select id="dash-producto" onchange="cargarDatosDashboard()"
+                                style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; max-width: 150px;">
+                                <option value="">Todos los Productos</option>
+                                <!-- Llenado dinámicamente vía JS -->
+                            </select>
+                        </div>
+
+                        <button onclick="cargarDatosDashboard()"
+                            class="btn-primary btn-sm btn-filtrar">Refrescar</button>
+                    </div>
+
+                    <button onclick="cargarDatosDashboard()" class="btn-primary btn-sm btn-filtrar">Aplicar
+                        Filtro</button>
+                </div>
+            </div>
+
+
+            <!-- Tarjetas Globales -->
+            <div class="kpi-container">
+                <div class="kpi-card">
+                    <h5>Ventas Globales</h5>
+                    <h2 id="kpi-ventas">$0.00</h2>
+                </div>
+                <div class="kpi-card card-primary">
+                    <h5>Ganancia Global</h5>
+                    <h2 id="kpi-ganancia" style="color: #28a745;">$0.00</h2>
+                </div>
+                <div class="kpi-card">
+                    <h5>Stock Global en Sistema</h5>
+                    <h2 id="kpi-stock">0 Unds</h2>
+                </div>
+                <!-- NUEVAS TARJETAS DE CRÉDITO -->
+                <div class="kpi-card">
+                    <h5>Ventas a Crédito (Filtro)</h5>
+                    <h2 id="kpi-credito" style="color: #ffc107;">$0.00</h2>
+                </div>
+                <div class="kpi-card">
+                    <h5>Cuentas por Cobrar (Total)</h5>
+                    <h2 id="kpi-deuda" style="color: #dc3545;">$0.00</h2>
+                </div>
+            </div>
+
+
+            <!-- Tabla de Rendimiento por TPV -->
+            <div class="card mt-20">
+                <h4>Rendimiento y Eficiencia por Instancia / Vendedor</h4>
+                <div class="table-responsive">
+                    <table id="tabla-eficiencia">
+                        <thead>
+                            <tr>
+                                <th>Instancia</th>
+                                <th>Stock Actual</th>
+                                <th>Horas Trabajadas</th>
+                                <th>Total Ventas</th>
+                                <th>Ganancia Neta</th>
+                                <th>Eficiencia (Ganancia / Hr)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-eficiencia">
+                            <!-- Llenado por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="almacen-layout mt-20" style="padding: 0;">
+                <div class="card panel-izquierdo">
+                    <h4 style="color: var(--success-color);">🔥 Top 3: Más Vendidos</h4>
+                    <div class="table-responsive">
+                        <table id="tabla-top3" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left; padding: 8px; border-bottom: 2px solid #ddd;">Producto
+                                    </th>
+                                    <th style="text-align: center; padding: 8px; border-bottom: 2px solid #ddd;">Cant.
+                                    </th>
+                                    <th style="text-align: right; padding: 8px; border-bottom: 2px solid #ddd;">Importe
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-top3">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card panel-derecho">
+                    <h4 style="color: var(--danger-color);">🧊 Top 3: Menos Vendidos</h4>
+                    <div class="table-responsive">
+                        <table id="tabla-bottom3" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left; padding: 8px; border-bottom: 2px solid #ddd;">Producto
+                                    </th>
+                                    <th style="text-align: center; padding: 8px; border-bottom: 2px solid #ddd;">Cant.
+                                    </th>
+                                    <th style="text-align: right; padding: 8px; border-bottom: 2px solid #ddd;">Importe
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-bottom3">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- NUEVO: Tabla de Desglose por Producto -->
+            <div class="card mt-20">
+                <h4>Desglose por Producto Vendido</h4>
+                <div class="table-responsive">
+                    <table id="tabla-productos">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Stock Actual</th>
+                                <th>Cantidad Vendida</th>
+                                <th>Total Ventas</th>
+                                <th>Ganancia Neta</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-productos">
+                            <!-- Llenado por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="offline-badge"
+        style="display: none; background: var(--danger-color); color: white; text-align: center; padding: 5px; font-weight: bold;">
+        ⚠️ Estás trabajando sin conexión. Los cambios se guardarán localmente.
+    </div>
+
+    <!-- ========================================================================== -->
+    <!-- NUEVO: MODAL DE CONFIRMACIÓN PERSONALIZADO                                 -->
+    <!-- ========================================================================== -->
+    <div id="modal-confirmacion" class="modal" style="display: none;">
+        <div class="modal-content card" style="max-width: 400px; border-top: 4px solid var(--warning-color);">
+            <span class="close" onclick="cerrarModalConfirmacion(false)">&times;</span>
+            <h4 id="confirm-titulo">Confirmar Acción</h4>
+            <p id="confirm-mensaje" class="subtitle"
+                style="margin-top: 15px; margin-bottom: 20px; font-size: 0.95rem; color: #444; line-height: 1.4;"></p>
+    
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button id="btn-confirmar-no" onclick="cerrarModalConfirmacion(false)" class="btn-secondary"
+                    style="margin-top: 0; width: auto; padding: 10px 20px;">Cancelar</button>
+                <button id="btn-confirmar-si" class="btn-warning"
+                    style="margin-top: 0; width: auto; padding: 10px 20px; background-color: var(--success-color); color: white;">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+       <!-- ========================================================================== -->
+    <!-- NUEVO: MODAL DE ALERTA PERSONALIZADO                                       -->
+    <!-- ========================================================================== -->
+    <div id="modal-alerta" class="modal" style="display: none;">
+        <div class="modal-content card" style="max-width: 400px; border-top: 4px solid var(--primary-color);">
+            <span class="close" onclick="cerrarModalAlerta()">&times;</span>
+            <h4 id="alerta-titulo-ui">Aviso del Sistema</h4>
+            <p id="alerta-mensaje-ui" class="subtitle"
+                style="margin-top: 15px; margin-bottom: 20px; font-size: 0.95rem; color: #444; line-height: 1.4;"></p>
+    
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="cerrarModalAlerta()" class="btn-primary"
+                    style="margin-top: 0; width: auto; padding: 10px 20px;">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    console.log('Service Worker registrado', reg);
+                }).catch(err => console.warn('Error al registrar SW', err));
+            });
+        }
+    </script>
+    <script src="app.js"></script>
+</body>
+
+</html>
