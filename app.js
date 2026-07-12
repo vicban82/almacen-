@@ -156,16 +156,17 @@ function renderizarCatalogo() {
   contenedor.innerHTML = "";
 
   catalogoLocal.forEach((prod) => {
-    const minAlerta = prod.stock_minimo || 0;
+    const minAlerta = Number(prod.stock_minimo) || 0;
+    const stockActual = Number(prod.existencia) || 0;
+    
     const item = document.createElement("div");
     item.className = "inventario-item";
     item.innerHTML = `
             <div>
                 <strong>${prod.nombre}</strong> <small>(${prod.id})</small><br>
                 <span class="stock-badge ${
-                  (minAlerta > 0 && prod.existencia <= minAlerta) ? "bajo-stock" : ""
-                }">Stock: ${prod.existencia}</span>
-                
+                  (minAlerta > 0 && stockActual <= minAlerta) ? "bajo-stock" : ""
+                }">Stock: ${stockActual}</span>
             </div>
             <div class="precios" style="text-align: right;">
                 Costo: $${prod.inversion} | Venta: $${prod.precio}<br>
@@ -174,7 +175,7 @@ function renderizarCatalogo() {
         `;
     contenedor.appendChild(item);
   });
-}
+
 
 function actualizarSelectTransferencias() {
     const select = document.getElementById("trans-producto");
@@ -457,9 +458,12 @@ async function chequearNotificacionesSilencioso() {
       notificacionesPendientes = data.data.transferencias || [];
       alertasTPVPendientes = data.data.alertasStockTPV || [];
       
-      alertasStockPendientes = catalogoLocal.filter(
-        (prod) => (prod.stock_minimo || 0) > 0 && prod.existencia <= (prod.stock_minimo || 0)
-      );
+      alertasStockPendientes = catalogoLocal.filter((prod) => {
+        const min = Number(prod.stock_minimo) || 0;
+        const actual = Number(prod.existencia) || 0;
+        return min > 0 && actual <= min;
+      });
+
 
       const btnNotificaciones = document.getElementById("btn-notificaciones");
       const badge = document.getElementById("badge-notificaciones");
@@ -508,8 +512,11 @@ function abrirModalNotificaciones() {
     alertasStockPendientes.forEach((prod) => {
       const div = document.createElement("div");
       div.className = "notificacion-item alerta-critica";
-      const minAlerta = prod.stock_minimo || 0;
-      let cantidadSugerida = (minAlerta * 2) - prod.existencia;
+      
+      const minAlerta = Number(prod.stock_minimo) || 0;
+      const stockActual = Number(prod.existencia) || 0;
+      
+      let cantidadSugerida = (minAlerta * 2) - stockActual;
       if (cantidadSugerida <= 0) cantidadSugerida = minAlerta; 
 
       div.innerHTML = `
@@ -517,7 +524,7 @@ function abrirModalNotificaciones() {
         <div class="alerta-texto"><strong>Producto:</strong> ${prod.nombre}</div>
         <div class="alerta-texto">
             <strong>Stock Actual en Almacén:</strong> 
-            <span class="stock-badge bajo-stock">${prod.existencia}</span> 
+            <span class="stock-badge bajo-stock">${stockActual}</span> 
             <span class="alerta-nota">(Mínimo requerido: ${minAlerta})</span>
         </div>
         
