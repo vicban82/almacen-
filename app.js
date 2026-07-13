@@ -175,6 +175,7 @@ function renderizarCatalogo() {
         `;
     contenedor.appendChild(item);
   });
+}
 
 
 function actualizarSelectTransferencias() {
