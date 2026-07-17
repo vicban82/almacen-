@@ -61,7 +61,7 @@
                 <div class="card mt-20" style="border-top: 4px solid var(--success-color);">
                     <h4 style="color: var(--success-color);">📥 Registrar Entrada de Mercancía (Proveedor)</h4>
                     <p class="subtitle">Aumentar stock por compra o reabastecimiento directo del proveedor</p>
-                
+
                     <div class="form-group">
                         <label>Producto recibido:</label>
                         <select id="prov-producto"></select>
@@ -74,9 +74,10 @@
                         <label>Proveedor / Nro. Factura / Nota:</label>
                         <input type="text" id="prov-motivo" placeholder="Ej. Distribuidor Central - Factura #991">
                     </div>
-                    <button onclick="ejecutarEntradaProveedor()" class="btn-success" style="margin-top: 5px; width: 100%;">Registrar Entrada de Proveedor</button>
+                    <button onclick="ejecutarEntradaProveedor()" class="btn-success"
+                        style="margin-top: 5px; width: 100%;">Registrar Entrada de Proveedor</button>
                 </div>
-                
+
 
                 <div class="card mt-20" style="border-top: 4px solid var(--danger-color);">
                     <h4 style="color: var(--danger-color);">📉 Registrar Salida / Merma</h4>
@@ -202,48 +203,44 @@
                         <button onclick="setRangoFecha('mes')" class="btn-shortcut">Este Mes</button>
                     </div>
                 </div>
+                
+                <!-- Contenedor corregido sin anidaciones duplicadas -->
                 <div class="filter-inputs">
-                    <div class="filter-inputs">
-                        <div class="input-group">
-                            <label for="dash-fecha-inicio">Desde:</label>
-                            <input type="date" id="dash-fecha-inicio"
-                                onchange="validarFechas(); cargarDatosDashboard();">
-                        </div>
-                        <div class="input-group">
-                            <label for="dash-fecha-fin">Hasta:</label>
-                            <input type="date" id="dash-fecha-fin" onchange="validarFechas(); cargarDatosDashboard();">
-                        </div>
-
-                        <!-- NUEVO: Filtro por TPV -->
-                        <div class="input-group">
-                            <label for="dash-tpv">TPV:</label>
-                            <select id="dash-tpv" onchange="cargarDatosDashboard()"
-                                style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
-                                <option value="">Todos los TPV</option>
-                                <option value="TPV_1">TPV_1</option>
-                                <option value="TPV_2">TPV_2</option>
-                                <option value="Almacen">Almacén</option>
-                            </select>
-                        </div>
-
-                        <!-- NUEVO: Filtro por Producto -->
-                        <div class="input-group">
-                            <label for="dash-producto">Producto:</label>
-                            <select id="dash-producto" onchange="cargarDatosDashboard()"
-                                style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; max-width: 150px;">
-                                <option value="">Todos los Productos</option>
-                                <!-- Llenado dinámicamente vía JS -->
-                            </select>
-                        </div>
-
-                        <button onclick="cargarDatosDashboard()"
-                            class="btn-primary btn-sm btn-filtrar">Refrescar</button>
+                    <div class="input-group">
+                        <label for="dash-fecha-inicio">Desde:</label>
+                        <input type="date" id="dash-fecha-inicio" onchange="validarFechas(); cargarDatosDashboard();">
                     </div>
-
-                    <button onclick="cargarDatosDashboard()" class="btn-primary btn-sm btn-filtrar">Aplicar
-                        Filtro</button>
+                    <div class="input-group">
+                        <label for="dash-fecha-fin">Hasta:</label>
+                        <input type="date" id="dash-fecha-fin" onchange="validarFechas(); cargarDatosDashboard();">
+                    </div>
+            
+                    <div class="input-group">
+                        <label for="dash-tpv">TPV:</label>
+                        <select id="dash-tpv" onchange="cargarDatosDashboard()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                            <option value="">Todos los TPV</option>
+                            <option value="TPV_1">TPV_1</option>
+                            <option value="TPV_2">TPV_2</option>
+                            <option value="Almacen">Almacén</option>
+                        </select>
+                    </div>
+            
+                    <div class="input-group">
+                        <label for="dash-producto">Producto:</label>
+                        <select id="dash-producto" onchange="cargarDatosDashboard()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; max-width: 150px;">
+                            <option value="">Todos los Productos</option>
+                            <!-- Llenado dinámicamente vía JS -->
+                        </select>
+                    </div>
+            
+                    <!-- Grupo de botones corregido y alineado -->
+                    <div style="display: flex; gap: 10px; align-items: flex-end;">
+                        <button onclick="cargarDatosDashboard()" class="btn-primary btn-sm btn-filtrar">Aplicar / Refrescar</button>
+                        <button onclick="imprimirIPV()" class="btn-secondary btn-sm btn-filtrar" style="background-color: #17a2b8;">🖨️ Imprimir IPV</button>
+                    </div>
                 </div>
             </div>
+            
 
 
             <!-- Tarjetas Globales -->
@@ -374,7 +371,7 @@
             <h4 id="confirm-titulo">Confirmar Acción</h4>
             <p id="confirm-mensaje" class="subtitle"
                 style="margin-top: 15px; margin-bottom: 20px; font-size: 0.95rem; color: #444; line-height: 1.4;"></p>
-    
+
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button id="btn-confirmar-no" onclick="cerrarModalConfirmacion(false)" class="btn-secondary"
                     style="margin-top: 0; width: auto; padding: 10px 20px;">Cancelar</button>
@@ -384,7 +381,7 @@
         </div>
     </div>
 
-       <!-- ========================================================================== -->
+    <!-- ========================================================================== -->
     <!-- NUEVO: MODAL DE ALERTA PERSONALIZADO                                       -->
     <!-- ========================================================================== -->
     <div id="modal-alerta" class="modal" style="display: none;">
@@ -393,7 +390,7 @@
             <h4 id="alerta-titulo-ui">Aviso del Sistema</h4>
             <p id="alerta-mensaje-ui" class="subtitle"
                 style="margin-top: 15px; margin-bottom: 20px; font-size: 0.95rem; color: #444; line-height: 1.4;"></p>
-    
+
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button onclick="cerrarModalAlerta()" class="btn-primary"
                     style="margin-top: 0; width: auto; padding: 10px 20px;">Aceptar</button>
@@ -401,7 +398,7 @@
         </div>
     </div>
 
-    
+
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
