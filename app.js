@@ -98,7 +98,7 @@ async function iniciarSesion() {
       mostrarAlerta(data.data.error || "Clave incorrecta o no tiene permisos de Almacén.", "Error");
     }
   } catch (error) {
-    mostrarAlerta("Error de conexión con el servidor.", "Error de Red");
+    mostrarAlerta("Error de conexión con el servidor, vuelva a intentarlo, vuelva a intentarlo., vuelva a intentarlo.", "Error de Red");
   } finally {
     ocultarLoading();
   }
@@ -968,3 +968,200 @@ async function ejecutarEntradaProveedor() {
     ocultarLoading();
   }
 }
+
+// ==========================================
+// MÓDULO DE IMPRESIÓN IPV
+// ==========================================
+
+async function imprimirIPV() {
+  const fechaInicio = document.getElementById("dash-fecha-inicio").value;
+  const fechaFin = document.getElementById("dash-fecha-fin").value;
+  const tpvFiltro = document.getElementById("dash-tpv").value;
+  const productoFiltro = document.getElementById("dash-producto").value;
+
+  mostrarLoading("Generando documento IPV...");
+
+  try {
+    const payload = {
+      action: "obtener_datos_dashboard",
+      payload: { fechaInicio, fechaFin, tpvFiltro, productoFiltro },
+    };
+    
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    
+    const data = await response.json();
+
+    if (data.success) {
+      // Abre la ventana de impresión enviando los datos y los filtros actuales
+      generarVistaImpresionIPV(data.data, fechaInicio, fechaFin, tpvFiltro, productoFiltro);
+    } else {
+      mostrarAlerta("Error al generar IPV: " + data.data.error, "Error");
+    }
+  } catch (error) {
+    mostrarAlerta("Error de red al intentar generar el IPV.", "Error de Red");
+  } finally {
+    ocultarLoading();
+  }
+}
+
+function generarVistaImpresionIPV(datos, fInicio, fFin, tpv, producto) {
+  // Configuración de la nueva ventana
+  const ventana = window.open('', '_blank');
+  
+  // Textos y variables de cabecera
+  const textoTpv = tpv === "" ? "Todas las Áreas / Almacén Central" : tpv;
+  const textoProducto = producto === "" ? "Todos los Productos" : producto;
+  const textoFechaInicio = fInicio ? fInicio.split('-').reverse().join('/') : "N/D";
+  const textoFechaFin = fFin ? fFin.split('-').reverse().join('/') : "N/D";
+  const fechaConteo = new Date().toLocaleDateString('es-MX');
+
+  let html = `
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+      <meta charset="UTF-8">
+      <title>Reporte IPV - ${textoTpv}</title>
+      <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; font-size: 11px; color: #000; }
+          h2 { text-align: center; text-transform: uppercase; margin-bottom: 20px; font-size: 16px; text-decoration: underline; }
+          
+          /* Estilos de Tablas */
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .header-table td { border: none; padding: 5px; font-size: 12px; }
+          .data-table th, .data-table td { border: 1px solid #000; padding: 6px; text-align: center; }
+          .data-table th { background-color: #f2f2f2; font-weight: bold; font-size: 11px; }
+          .data-table .text-left { text-align: left; }
+          .data-table .text-right { text-align: right; }
+          
+          /* Pie de Página */
+          .footer-section { margin-top: 40px; width: 100%; }
+          .firmas-table td { border: none; text-align: center; vertical-align: bottom; height: 60px; width: 33%; }
+          .linea-firma { border-top: 1px solid #000; padding-top: 5px; margin: 0 20px; font-weight: bold; }
+          
+          /* Ocultar botón al imprimir */
+          .btn-imprimir { display: block; margin: 30px auto; padding: 12px 25px; background-color: #007bff; color: white; border: none; border-radius: 5px; font-size: 1rem; cursor: pointer; font-weight: bold; }
+          @media print { .btn-imprimir { display: none; } }
+      </style>
+  </head>
+  <body>
+      <h2>Modelo de Formato IPV (Inventario de Precios y Ventas)</h2>
+      
+      <!-- ENCABEZADO DEL DOCUMENTO -->
+      <table class="header-table">
+          <tr>
+              <td width="50%"><strong>Nombre del Negocio / Actividad:</strong> Sistema TPV / Almacén</td>
+              <td width="30%"><strong>Área / Departamento:</strong> ${textoTpv}</td>
+              <td width="20%"><strong>Número de Hoja:</strong> 001</td>
+          </tr>
+          <tr>
+              <td><strong>Fecha de Inicio:</strong> ${textoFechaInicio}</td>
+              <td><strong>Fecha de Cierre:</strong> ${textoFechaFin}</td>
+              <td></td>
+          </tr>
+      </table>
+
+      <!-- TABLA DE REGISTRO DE PRODUCTOS -->
+      <table class="data-table">
+          <thead>
+              <tr>
+                  <th>Código del Producto</th>
+                  <th>Descripción del Producto</th>
+                  <th>Unidad de Medida</th>
+                  <th>Precio de Venta Unitario (CUP)</th>
+                  <th>Inventario Inicial (Cantidad)</th>
+                  <th>Entradas (Compras / Producción)</th>
+                  <th>Salidas (Ventas / Consumo)</th>
+                  <th>Inventario Final (Cantidad)</th>
+                  <th>Valor Total del Inventario (CUP)</th>
+              </tr>
+          </thead>
+          <tbody>
+  `;
+
+  const desglose = datos.desgloseProducto;
+  let valorInventarioGlobal = 0;
+
+  if (desglose && Object.keys(desglose).length > 0) {
+      const productosOrdenados = Object.keys(desglose).sort();
+      
+      for (const nombreProducto of productosOrdenados) {
+          const info = desglose[nombreProducto];
+          
+          // Buscar producto en el catálogo local para obtener su ID, Precio y Costo real
+          const prodLocal = catalogoLocal.find(p => p.nombre === nombreProducto) || {};
+          
+          const codigo = prodLocal.id || "S/C";
+          const um = "unidad"; // Medida estándar, ajustable si tienes la variable en DB
+          const precioVenta = parseFloat(prodLocal.precio) || 0;
+          
+          // Variables de movimiento
+          const salidas = parseFloat(info.cantidad) || 0;
+          const inventarioFinal = info.stock !== undefined ? parseFloat(info.stock) : (parseFloat(prodLocal.existencia) || 0);
+          
+          // Como en el dashboard base no tenemos sumatoria pura de entradas en el rango, 
+          // calculamos el Inventario Inicial matemáticamente: (Inicial = Final + Salidas - Entradas)
+          const entradas = 0; 
+          const inventarioInicial = inventarioFinal + salidas - entradas;
+          
+          // Cálculo del Valor
+          const valorTotalLinea = inventarioFinal * precioVenta;
+          valorInventarioGlobal += valorTotalLinea;
+
+          html += `
+              <tr>
+                  <td>${codigo}</td>
+                  <td class="text-left">${nombreProducto}</td>
+                  <td>${um}</td>
+                  <td class="text-right">${precioVenta.toFixed(2)}</td>
+                  <td>${inventarioInicial}</td>
+                  <td>${entradas}</td>
+                  <td>${salidas}</td>
+                  <td>${inventarioFinal}</td>
+                  <td class="text-right">${valorTotalLinea.toFixed(2)}</td>
+              </tr>
+          `;
+      }
+  } else {
+      html += `<tr><td colspan="9" style="padding: 20px;">No se encontraron registros para los filtros aplicados.</td></tr>`;
+  }
+
+  html += `
+          </tbody>
+      </table>
+      
+      <!-- PIE DEL DOCUMENTO Y FIRMAS -->
+      <div style="margin-top: 20px; font-size: 13px;">
+          <strong>Observaciones:</strong> __________________________________________________________________________________________________<br><br>
+          _____________________________________________________________________________________________________________________________
+      </div>
+
+      <div class="footer-section">
+          <table class="firmas-table">
+              <tr>
+                  <td>
+                      <div class="linea-firma">Elaborado por (Nombre y Firma)</div>
+                  </td>
+                  <td>
+                      <div class="linea-firma">Responsable del Almacén / Área</div>
+                  </td>
+                  <td>
+                      <div class="linea-firma">Fecha de Realización: ${fechaConteo}</div>
+                  </td>
+              </tr>
+          </table>
+      </div>
+
+      <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+  </body>
+  </html>
+  `;
+
+  // Renderizar la vista en la nueva pestaña
+  ventana.document.open();
+  ventana.document.write(html);
+  ventana.document.close();
+}
+
