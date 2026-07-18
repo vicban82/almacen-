@@ -23,11 +23,29 @@ body { background-color: var(--bg-color); color: var(--text-color); }
 #login-screen input { padding: 12px; font-size: 1rem; border: 1px solid #ccc; border-radius: var(--border-radius); margin: 15px 0; width: 300px; text-align: center; }
 
 /* Header */
-header { background-color: var(--card-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-header h3 { color: var(--primary-color); }
+header { 
+    background-color: var(--card-bg); 
+    padding: 15px 20px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+    margin-bottom: 20px; 
+    flex-wrap: wrap; /* Nuevo: Permite que los elementos se reacomoden si no caben */
+    gap: 15px; /* Nuevo: Espacio seguro entre el título y los botones */
+}
+
+header h3 { 
+    color: var(--primary-color); 
+    margin: 0;
+    font-size: 1.2rem;
+    line-height: 1.2;
+    min-width: 150px; /* Nuevo: Evita que el título se aplaste en 3 líneas */
+}
+
 
 /* Botones */
-button { padding: 12px 20px; font-size: 1rem; border: none; border-radius: var(--border-radius); cursor: pointer; color: white; background-color: var(--primary-color); width: 100%; transition: 0.2s; font-weight: bold;}
+button { padding: 12px 20px; font-size: 1rem; border: none; border-radius: var(--border-radius); cursor: pointer; color: white; background-color: var(--primary-color); width: 60%; max-width: 184px; transition: 0.2s; font-weight: bold;}
 button:hover { background-color: var(--primary-hover); }
 .btn-secondary { background-color: #6c757d; width: auto; }
 .btn-success { background-color: var(--success-color); margin-top: 15px;}
@@ -122,13 +140,24 @@ button:hover { background-color: var(--primary-hover); }
     background-color: var(--danger-color);
     color: white;
     border-radius: 50%;
-    padding: 2px 6px;
-    font-size: 0.8rem;
+    padding: 3px 7px; /* Un poco más redondo y legible */
+    font-size: 0.75rem;
     position: absolute;
-    top: -5px;
-    right: -5px;
+    top: -8px; /* Ligeramente más arriba */
+    right: -8px; /* Ligeramente más a la derecha */
     font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Sombra para resaltar sobre el botón amarillo */
 }
+
+
+/* Modificador para botones que solo tienen iconos */
+.btn-icon {
+    padding: 8px !important; /* Reduce el relleno horizontal */
+    width: 40px !important;  /* Fuerza un ancho igual a la altura (40px) */
+    font-size: 1.2rem;       /* Hace el icono un poco más grande y legible */
+}
+
+
 
 .boton-alerta {
     background-color: var(--warning-color) !important;
@@ -272,17 +301,30 @@ button:hover { background-color: var(--primary-hover); }
 /* Contenedor flexible para alinear los botones uno al lado del otro */
 .header-actions {
     display: flex;
-    gap: 10px; /* Espacio uniforme entre botones */
+    gap: 10px;
     align-items: center;
+    flex-wrap: wrap; /* Nuevo: Si la pantalla es muy pequeña, los botones bajan juntos */
+    justify-content: flex-end; /* Nuevo: Alinea los botones a la derecha */
+    flex: 1; /* Nuevo: Toma el espacio disponible restante */
 }
+
 
 /* Modificador para botones pequeños */
 .btn-sm {
-    padding: 8px 12px;
+    display: inline-flex; /* Nuevo: Alinea ícono y texto horizontalmente */
+    align-items: center; /* Nuevo: Centra verticalmente ícono y texto */
+    justify-content: center;
+    gap: 6px; /* Nuevo: Espacio limpio entre el emoji y el texto */
+    padding: 8px 15px;
     font-size: 0.9rem;
-    width: auto;
-    margin-top: 0 !important; /* Fuerza a quitar el margen superior heredado de .btn-success */
+    width: auto !important; /* Fuerza a ignorar el width: 60% global */
+    max-width: none !important; /* Elimina la restricción de 184px */
+    margin-top: 0 !important;
+    white-space: nowrap; /* CRUCIAL: Evita que el texto baje a una segunda línea */
+    position: relative; /* CRUCIAL: Posiciona correctamente el .badge de notificaciones */
+    height: 40px; /* Nuevo: Altura estandarizada para todos los botones superiores */
 }
+
 
 /* NUEVOS ESTILOS PARA EL FILTRO DE FECHAS */
 .filter-card {
@@ -356,4 +398,11 @@ button:hover { background-color: var(--primary-hover); }
 #modal-confirmacion .modal-content button {
     flex: 1;
     max-width: 150px;
+}
+
+.logo-login {
+    max-width: 292px; /* Ajusta este valor según el tamaño de tu imagen */
+    height: auto;
+    margin-bottom: 15px;
+    border-radius: var(--border-radius); /* Opcional: le dará bordes suaves si tu logo tiene fondo cuadrado */
 }
