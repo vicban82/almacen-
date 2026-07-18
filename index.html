@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gestión de Almacén - TPV</title>
+    <!-- Icono de la aplicación (Favicon) -->
+    <link rel="icon" type="image/png" href="FavIcon.png">
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -15,6 +17,7 @@
     </div>
 
     <div id="login-screen" class="screen active">
+        <img src="logo.png" alt="Logo de la aplicacion" class="logo-login">
         <h2>Acceso Almacén Central</h2>
         <input type="password" id="clave-input" placeholder="Clave de Administrador">
         <button onclick="iniciarSesion()">Entrar</button>
@@ -22,19 +25,19 @@
 
     <div id="almacen-screen" class="screen">
         <header>
-            <h3>Panel de Almacén Central</h3>
+            <h3>Almacén Central</h3>
             <div class="header-actions">
-                <button onclick="abrirDashboard()" class="btn-success btn-sm">📊 Ver Dashboard</button>
-                <button id="btn-notificaciones" onclick="abrirModalNotificaciones()" class="btn-secondary btn-sm"
-                    style="display:none;">
-                    🔔 Notificaciones <span id="badge-notificaciones" class="badge">0</span>
+                <!-- Se eliminó el texto y se agregó la clase btn-icon y el atributo title -->
+                <button onclick="abrirDashboard()" class="btn-success btn-sm btn-icon" title="Ver Dashboard">📊</button>
+                
+                <button id="btn-notificaciones" onclick="abrirModalNotificaciones()" class="btn-secondary btn-sm btn-icon" style="display:none;" title="Notificaciones">
+                    🔔 <span id="badge-notificaciones" class="badge">0</span>
                 </button>
-                <button onclick="cerrarSesion()" class="btn-secondary btn-sm">🚪 Cerrar Sesión</button>
+                
+                <button onclick="cerrarSesion()" class="btn-secondary btn-sm btn-icon" title="Cerrar Sesión">🚪</button>
             </div>
         </header>
-
-
-
+ 
 
         <main class="almacen-layout">
             <section class="panel-izquierdo">
@@ -53,6 +56,7 @@
                         <select id="trans-destino">
                             <option value="TPV_1">TPV_1</option>
                             <option value="TPV_2">TPV_2</option>
+                            <option value="TPV_3">TPV_3</option>
                         </select>
                     </div>
                     <button onclick="ejecutarTransferencia()" class="btn-warning">Enviar a TPV</button>
@@ -203,7 +207,7 @@
                         <button onclick="setRangoFecha('mes')" class="btn-shortcut">Este Mes</button>
                     </div>
                 </div>
-                
+
                 <!-- Contenedor corregido sin anidaciones duplicadas -->
                 <div class="filter-inputs">
                     <div class="input-group">
@@ -214,33 +218,38 @@
                         <label for="dash-fecha-fin">Hasta:</label>
                         <input type="date" id="dash-fecha-fin" onchange="validarFechas(); cargarDatosDashboard();">
                     </div>
-            
+
                     <div class="input-group">
                         <label for="dash-tpv">TPV:</label>
-                        <select id="dash-tpv" onchange="cargarDatosDashboard()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                        <select id="dash-tpv" onchange="cargarDatosDashboard()"
+                            style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
                             <option value="">Todos los TPV</option>
                             <option value="TPV_1">TPV_1</option>
                             <option value="TPV_2">TPV_2</option>
+                            <option value="TPV_3">TPV_3</option>
                             <option value="Almacen">Almacén</option>
                         </select>
                     </div>
-            
+
                     <div class="input-group">
                         <label for="dash-producto">Producto:</label>
-                        <select id="dash-producto" onchange="cargarDatosDashboard()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; max-width: 150px;">
+                        <select id="dash-producto" onchange="cargarDatosDashboard()"
+                            style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; max-width: 150px;">
                             <option value="">Todos los Productos</option>
                             <!-- Llenado dinámicamente vía JS -->
                         </select>
                     </div>
-            
+
                     <!-- Grupo de botones corregido y alineado -->
                     <div style="display: flex; gap: 10px; align-items: flex-end;">
-                        <button onclick="cargarDatosDashboard()" class="btn-primary btn-sm btn-filtrar">Aplicar / Refrescar</button>
-                        <button onclick="imprimirIPV()" class="btn-secondary btn-sm btn-filtrar" style="background-color: #17a2b8;">🖨️ Imprimir IPV</button>
+                        <button onclick="cargarDatosDashboard()" class="btn-primary btn-sm btn-filtrar">Aplicar /
+                            Refrescar</button>
+                        <button onclick="imprimirIPV()" class="btn-secondary btn-sm btn-filtrar"
+                            style="background-color: #17a2b8;">🖨️ Imprimir IPV</button>
                     </div>
                 </div>
             </div>
-            
+
 
 
             <!-- Tarjetas Globales -->
