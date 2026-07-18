@@ -1,9 +1,11 @@
-const CACHE_NAME = 'almacen-v20';
+const CACHE_NAME = 'almacen-v26';
 const ASSETS = [
     './',
     './index.html',
     './styles.css',
-    './app.js'
+    './app.js',
+    './FavIcon.png',
+    './logo.png',
 ];
 
 // Instalar y guardar en caché
