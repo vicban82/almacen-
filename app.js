@@ -1,5 +1,5 @@
 // Asegúrate de usar la misma URL de tu API
-const API_URL = "https://script.google.com/macros/s/AKfycbwGEpRyHBEVdx78f7QbOLyZwsfBXitG32UaGNrq-AEhNYRbetdl_4slB67AJTFssVriig/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwpQwEIevc0ges38973fHNM3rGIy5z6GzSvZRneMR0ZpOjVcGtNHFnYavvgRiLXmYPlKg/exec";
 
 // ==========================================================================
 // NUEVO: CONTROLADOR DE MODAL DE ALERTA PERSONALIZADO
