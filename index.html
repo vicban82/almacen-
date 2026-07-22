@@ -29,15 +29,16 @@
             <div class="header-actions">
                 <!-- Se eliminó el texto y se agregó la clase btn-icon y el atributo title -->
                 <button onclick="abrirDashboard()" class="btn-success btn-sm btn-icon" title="Ver Dashboard">📊</button>
-                
-                <button id="btn-notificaciones" onclick="abrirModalNotificaciones()" class="btn-secondary btn-sm btn-icon" style="display:none;" title="Notificaciones">
+
+                <button id="btn-notificaciones" onclick="abrirModalNotificaciones()"
+                    class="btn-secondary btn-sm btn-icon" style="display:none;" title="Notificaciones">
                     🔔 <span id="badge-notificaciones" class="badge">0</span>
                 </button>
-                
+
                 <button onclick="cerrarSesion()" class="btn-secondary btn-sm btn-icon" title="Cerrar Sesión">🚪</button>
             </div>
         </header>
- 
+
 
         <main class="almacen-layout">
             <section class="panel-izquierdo">
@@ -110,6 +111,37 @@
                     <div id="catalogo-container" class="inventario-lista">
                     </div>
                 </div>
+                <!-- Añadir en la sección "panel-derecho" o donde prefieras -->
+            <div class="card card-primary mt-20">
+                <h4>🤖 Asistente IA de Compras</h4>
+                <p class="subtitle">Analiza el stock crítico y genera sugerencias de pedido.</p>
+                <button onclick="solicitarAnalisisIA()" class="btn-primary" style="width: 100%;">
+                    Generar Análisis Predictivo
+                </button>
+
+                <!-- Contenedor para mostrar la respuesta -->
+                <div id="resultado-ia"
+                    style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px; display: none; font-size: 0.9rem; white-space: pre-wrap;">
+                </div>
+            </div>
+            <!-- CHATBOT NLP - Añadir en el panel izquierdo o derecho -->
+<div class="card mt-20" style="border-top: 4px solid #6f42c1;">
+    <h4 style="color: #6f42c1;">💬 Chatbot de Inventario</h4>
+    <p class="subtitle">Pregunta en lenguaje natural sobre stock o precios.</p>
+    
+    <div class="form-group">
+        <input type="text" id="chat-nlp-input" placeholder='Ej: "¿Cuántas Coca Colas quedan en TPV_1 y a qué precio?"' onkeypress="manejarEnterChat(event)" style="border-color: #e0d4f5;">
+    </div>
+    
+    <button onclick="consultarChatbotNLP()" class="btn-primary" style="width: 100%; background-color: #6f42c1; border-color: #6f42c1;">
+        Preguntar al Asistente
+    </button>
+
+    <!-- Contenedor para la respuesta de la IA -->
+    <div id="chat-nlp-resultado" style="margin-top: 15px; padding: 12px; background: #f8f5ff; border-left: 4px solid #6f42c1; border-radius: 4px; display: none; font-size: 0.95rem; white-space: pre-wrap; line-height: 1.4;">
+    </div>
+</div>
+
             </section>
 
             <section class="panel-derecho">
@@ -151,6 +183,7 @@
                     <button onclick="crearProducto()" class="btn-success">Guardar Producto</button>
                 </div>
             </section>
+
         </main>
     </div>
 
@@ -275,6 +308,12 @@
                     <h5>Cuentas por Cobrar (Total)</h5>
                     <h2 id="kpi-deuda" style="color: #dc3545;">$0.00</h2>
                 </div>
+                <!-- NUEVA TARJETA: Efectivo en Caja -->
+                <div class="kpi-card" style="border-top: 4px solid #17a2b8;">
+                    <h5>Efectivo en Caja (Filtro)</h5>
+                    <h2 id="kpi-efectivo" style="color: #17a2b8;">$0.00</h2>
+                </div>
+
             </div>
 
 
@@ -286,7 +325,7 @@
                         <thead>
                             <tr>
                                 <th>Instancia</th>
-                                <th>Stock Actual</th>
+                                <th>S/D</th>
                                 <th>Horas Trabajadas</th>
                                 <th>Total Ventas</th>
                                 <th>Ganancia Neta</th>
@@ -363,6 +402,30 @@
                     </table>
                 </div>
             </div>
+            <!-- TABLA DE AUDITORÍA E INCIDENCIAS -->
+            <div class="card mt-20" style="border-top: 4px solid var(--danger-color);">
+                <h4 style="color: var(--danger-color);">🚨 Auditoría e Incidencias (Pendientes)</h4>
+                <div class="table-responsive">
+                    <table id="tabla-incidencias">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left;">Fecha</th>
+                                <th style="text-align: left;">Origen</th>
+                                <th style="text-align: left;">Categoría</th>
+                                <th style="text-align: right;">Monto</th>
+                                <th style="text-align: center;">Nivel de Riesgo</th>
+                                <th style="text-align: center;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-incidencias">
+                            <tr>
+                                <td colspan="6" style="text-align:center; padding:15px;">Cargando incidencias...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -406,6 +469,38 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL DE RESOLUCIÓN DE INCIDENCIAS -->
+    <div id="modal-incidencia" class="modal" style="display: none;">
+        <div class="modal-content card" style="max-width: 500px; border-top: 4px solid var(--danger-color);">
+            <span class="close" onclick="cerrarModalIncidencia()">&times;</span>
+            <h4>Gestión de Incidencia</h4>
+            <p id="incidencia-subtitulo" class="subtitle" style="margin-bottom: 15px; font-weight: bold; color: #333;">
+            </p>
+
+            <!-- Contenedor donde se parseará y renderizará el Contexto_JSON -->
+            <div id="incidencia-detalles"
+                style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px; font-size: 0.9rem; border: 1px solid #eee;">
+            </div>
+
+            <div class="form-group">
+                <label>Justificación / Resolución del Administrador:</label>
+                <textarea id="incidencia-comentarios" rows="3"
+                    placeholder="Indique la justificación o las medidas disciplinarias tomadas..."
+                    style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit;"></textarea>
+            </div>
+
+            <!-- Almacena el ID de la fila en Google Sheets -->
+            <input type="hidden" id="incidencia-id-fila">
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
+                <button onclick="procesarResolucion('Rechazado')" class="btn-secondary"
+                    style="background-color: var(--danger-color); color: white;">Rechazar (Injustificado)</button>
+                <button onclick="procesarResolucion('Resuelto')" class="btn-success">Marcar como Resuelto</button>
+            </div>
+        </div>
+    </div>
+
 
 
     <script>
