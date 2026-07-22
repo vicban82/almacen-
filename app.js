@@ -1,5 +1,5 @@
 // Asegúrate de usar la misma URL de tu API
-const API_URL = "https://script.google.com/macros/s/AKfycbwpQwEIevc0ges38973fHNM3rGIy5z6GzSvZRneMR0ZpOjVcGtNHFnYavvgRiLXmYPlKg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwGEpRyHBEVdx78f7QbOLyZwsfBXitG32UaGNrq-AEhNYRbetdl_4slB67AJTFssVriig/exec";
 
 // ==========================================================================
 // NUEVO: CONTROLADOR DE MODAL DE ALERTA PERSONALIZADO
@@ -468,16 +468,26 @@ async function chequearNotificacionesSilencioso() {
 
       const btnNotificaciones = document.getElementById("btn-notificaciones");
       const badge = document.getElementById("badge-notificaciones");
-      const totalAvisos = notificacionesPendientes.length + alertasStockPendientes.length + alertasTPVPendientes.length;
+      //const totalAvisos = notificacionesPendientes.length + alertasStockPendientes.length + alertasTPVPendientes.length;
+      cargarIncidencias(); // Descarga silenciosa de descuadres
 
-      if (totalAvisos > 0) {
-        btnNotificaciones.style.display = "inline-block";
-        btnNotificaciones.classList.add("boton-alerta");
-        badge.innerText = totalAvisos;
-      } else {
-        btnNotificaciones.style.display = "none";
-        btnNotificaciones.classList.remove("boton-alerta");
-      }
+      window.actualizarNotificacionGlobal = function() {
+        const btnNotificaciones = document.getElementById("btn-notificaciones");
+        const badge = document.getElementById("badge-notificaciones");
+        
+        const totalAvisos = notificacionesPendientes.length + alertasStockPendientes.length + alertasTPVPendientes.length + incidenciasGlobales.length;
+
+        if (totalAvisos > 0) {
+            btnNotificaciones.style.display = "inline-block";
+            btnNotificaciones.classList.add("boton-alerta");
+            badge.innerText = totalAvisos;
+        } else {
+            btnNotificaciones.style.display = "none";
+            btnNotificaciones.classList.remove("boton-alerta");
+        }
+        actualizarNotificacionGlobal(); // Ejecutar inmediatamente
+    }
+
     }
   } catch (error) {
     console.warn("Fallo silencioso al chequear notificaciones.");
@@ -643,6 +653,7 @@ function abrirDashboard() {
   });
 
   cargarDatosDashboard();
+  cargarIncidencias();
 }
 
 async function cargarDatosDashboard() {
@@ -686,6 +697,11 @@ function renderizarDashboard(datos) {
   }
   if (document.getElementById("kpi-deuda")) {
     document.getElementById("kpi-deuda").innerText = `$${datos.global.deudaGlobal.toFixed(2)}`;
+  }
+
+  // NUEVO: Pinta el valor descontando los retiros
+  if (document.getElementById("kpi-efectivo")) {
+    document.getElementById("kpi-efectivo").innerText = `$${(datos.global.efectivoEnCaja || 0).toFixed(2)}`;
   }
 
   const tbodyTPV = document.getElementById("tbody-eficiencia");
@@ -1165,3 +1181,227 @@ function generarVistaImpresionIPV(datos, fInicio, fFin, tpv, producto) {
   ventana.document.close();
 }
 
+// ==========================================
+// MÓDULO DE AUDITORÍA E INCIDENCIAS
+// ==========================================
+let incidenciasGlobales = [];
+
+// 1. Obtener los datos desde la hoja 'Incidencias'
+async function cargarIncidencias() {
+    try {
+        const payload = { action: "obtener_incidencias", payload: {} };
+        const response = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+
+        if (data.success && Array.isArray(data.data)) {
+            incidenciasGlobales = data.data;
+            renderizarIncidencias();
+            actualizarNotificacionGlobal(); // Actualiza la campanita
+        }
+    } catch (error) {
+        console.error("Error al cargar la auditoría de incidencias:", error);
+    }
+}
+
+// 2. Poblar la tabla en el Dashboard
+function renderizarIncidencias() {
+    const tbody = document.getElementById("tbody-incidencias");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (incidenciasGlobales.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:15px; color: #666;">No hay incidencias críticas pendientes de revisión.</td></tr>';
+        return;
+    }
+
+    incidenciasGlobales.forEach(inc => {
+        const fechaObj = new Date(inc.fecha);
+        const fechaStr = fechaObj.toLocaleDateString() + " " + fechaObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        // Estilización de alertas visuales
+        const colorRiesgo = inc.riesgo === "Alto" ? "background-color: #ffcccc; color: #cc0000; font-weight: bold;" : "background-color: #fff3cd; color: #856404;";
+        const badgeRiesgo = `<span style="padding: 4px 8px; border-radius: 4px; ${colorRiesgo}">${inc.riesgo}</span>`;
+
+        tbody.innerHTML += `
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #ddd;">${fechaStr}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #ddd;"><strong>${inc.tpv}</strong></td>
+                <td style="padding: 12px; border-bottom: 1px solid #ddd;">${inc.categoria} <small>(${inc.tipo})</small></td>
+                <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right; font-weight: bold;">$${parseFloat(inc.monto).toFixed(2)}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">${badgeRiesgo}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
+                    <button onclick="abrirModalIncidencia(${inc.idFila})" class="btn-warning btn-sm" style="background-color: var(--danger-color); color: white;">Auditar</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// 3. Mostrar el Modal interactivo y parsear el Contexto_JSON
+function abrirModalIncidencia(idFila) {
+    const incidencia = incidenciasGlobales.find(i => i.idFila === idFila);
+    if (!incidencia) return;
+
+    document.getElementById("incidencia-id-fila").value = idFila;
+    document.getElementById("incidencia-subtitulo").innerText = `Alerta en ${incidencia.tpv} - ${incidencia.categoria}`;
+    document.getElementById("incidencia-comentarios").value = "";
+
+    let detallesHTML = "<strong>No hay contexto técnico adicional.</strong>";
+    
+    // Extracción dinámica de variables desde la columna G[cite: 1]
+    try {
+        const contexto = JSON.parse(incidencia.contexto_json);
+        detallesHTML = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div><strong>Fondo Inicial Carga:</strong> <br>$${(contexto.fondoInicial || 0).toFixed(2)}</div>
+                <div><strong>Ventas Teóricas:</strong> <br>$${(contexto.teorico || 0).toFixed(2)}</div>
+                <div><strong>Retiros Efectuados:</strong> <br>$${(contexto.retirosTotales || 0).toFixed(2)}</div>
+                <div style="color: var(--danger-color);"><strong>Efectivo Declarado Físico:</strong> <br>$${(contexto.declarado || 0).toFixed(2)}</div>
+                
+                <div style="grid-column: span 2; border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 5px; text-align: center;">
+                    <strong>Diferencia (${incidencia.tipo}):</strong> 
+                    <span style="font-size: 1.3em; margin-left: 10px; font-weight: bold; color: ${incidencia.riesgo === 'Alto' ? '#cc0000' : '#856404'};">
+                        $${parseFloat(incidencia.monto).toFixed(2)}
+                    </span>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        detallesHTML = `<p>Error al procesar el reporte original de la base de datos.</p>`;
+    }
+
+    document.getElementById("incidencia-detalles").innerHTML = detallesHTML;
+    document.getElementById("modal-incidencia").style.display = "flex";
+}
+
+function cerrarModalIncidencia() {
+    document.getElementById("modal-incidencia").style.display = "none";
+}
+
+// 4. Procesar el cambio de estado hacia el Backend
+async function procesarResolucion(estado) {
+    const idFila = document.getElementById("incidencia-id-fila").value;
+    const comentarios = document.getElementById("incidencia-comentarios").value.trim();
+
+    if (!comentarios) {
+        return mostrarAlerta("La auditoría requiere una justificación o comentario obligatoriamente.", "Campo Requerido");
+    }
+
+    mostrarLoading(`Registrando incidencia como ${estado}...`);
+    try {
+        const payload = {
+            action: "resolver_incidencia",
+            payload: { idFila: parseInt(idFila), estado: estado, comentarios: comentarios }
+        };
+
+        const response = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            mostrarAlerta(data.data.mensaje, "Auditoría Exitosa");
+            cerrarModalIncidencia();
+            await cargarIncidencias(); 
+        } else {
+            mostrarAlerta("Error en el servidor: " + data.data.error, "Error");
+        }
+    } catch (error) {
+        mostrarAlerta("Error de conexión al procesar la resolución.", "Fallo de Red");
+    } finally {
+        ocultarLoading();
+    }
+}
+
+// Función para consumir el nuevo endpoint de IA
+async function solicitarAnalisisIA() {
+  if (!navigator.onLine) {
+    return mostrarAlerta("La inteligencia artificial requiere conexión a internet.", "Modo Offline");
+  }
+
+  mostrarLoading("La IA está analizando tu almacén...");
+  const contenedorResultado = document.getElementById("resultado-ia");
+  contenedorResultado.style.display = "none";
+  contenedorResultado.innerText = "";
+
+  try {
+    const payload = {
+      action: "analizar_stock_con_ia", // Apunta a la nueva función en tu GAS
+      payload: {}
+    };
+
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    
+    const data = await response.json();
+
+    if (data.success) {
+      contenedorResultado.style.display = "block";
+      contenedorResultado.innerText = data.data.sugerencia;
+    } else {
+      mostrarAlerta("Error de IA: " + data.data.error, "Error");
+    }
+  } catch (error) {
+    mostrarAlerta("Error de red al consultar a la IA.", "Error de Red");
+  } finally {
+    ocultarLoading();
+  }
+}
+
+// Manejador para detectar la tecla "Enter" en el input del chat
+function manejarEnterChat(event) {
+  if (event.key === "Enter") {
+      consultarChatbotNLP();
+  }
+}
+
+// Función principal de conexión con el backend
+async function consultarChatbotNLP() {
+  const inputElement = document.getElementById("chat-nlp-input");
+  const pregunta = inputElement.value.trim();
+  
+  if (!pregunta) return mostrarAlerta("Por favor, escribe una pregunta para la IA.", "Atención");
+
+  if (!navigator.onLine) {
+      return mostrarAlerta("El Chatbot IA requiere conexión a internet para funcionar.", "Modo Offline");
+  }
+
+  mostrarLoading("La IA está traduciendo y analizando tu pregunta...");
+  const contenedorResultado = document.getElementById("chat-nlp-resultado");
+  contenedorResultado.style.display = "none";
+  contenedorResultado.innerText = "";
+
+  try {
+      const payload = {
+          action: "consultar_chatbot_ia", // Nueva acción en el enrutador
+          payload: { pregunta: pregunta }
+      };
+
+      const response = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify(payload),
+      });
+      
+      const data = await response.json();
+
+      if (data.success) {
+          contenedorResultado.style.display = "block";
+          // Renderiza la respuesta humana
+          contenedorResultado.innerText = data.data.respuesta; 
+          inputElement.value = ""; // Limpia el input tras el éxito
+      } else {
+          mostrarAlerta("Error de procesamiento IA: " + data.data.error, "Error");
+      }
+  } catch (error) {
+      mostrarAlerta("Error de red al intentar consultar al chatbot.", "Error de Red");
+  } finally {
+      ocultarLoading();
+  }
+}
