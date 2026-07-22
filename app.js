@@ -68,6 +68,10 @@ async function iniciarSesion() {
       document.getElementById("almacen-screen").classList.add("active");
       await cargarCatalogo();
       ocultarLoading();
+      const inputClave = document.getElementById("clave-input");
+      inputClave.value = '';           // Limpiar valor
+      inputClave.disabled = true;      // Deshabilitar (el navegador no lo considera activo)
+      inputClave.type = 'text';        // Cambiar tipo para que no sea "password"
       return;
     } else {
       ocultarLoading();
@@ -993,14 +997,13 @@ async function imprimirIPV() {
   const fechaInicio = document.getElementById("dash-fecha-inicio").value;
   const fechaFin = document.getElementById("dash-fecha-fin").value;
   const tpvFiltro = document.getElementById("dash-tpv").value;
-  const productoFiltro = document.getElementById("dash-producto").value;
 
   mostrarLoading("Generando documento IPV...");
 
   try {
     const payload = {
-      action: "obtener_datos_dashboard",
-      payload: { fechaInicio, fechaFin, tpvFiltro, productoFiltro },
+      action: "obtener_datos_ipv",
+      payload: { fechaInicio, fechaFin, tpvFiltro }
     };
     
     const response = await fetch(API_URL, {
@@ -1010,11 +1013,10 @@ async function imprimirIPV() {
     
     const data = await response.json();
 
-    if (data.success) {
-      // Abre la ventana de impresión enviando los datos y los filtros actuales
-      generarVistaImpresionIPV(data.data, fechaInicio, fechaFin, tpvFiltro, productoFiltro);
+    if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+      generarVistaImpresionIPV(data.data, fechaInicio, fechaFin, tpvFiltro);
     } else {
-      mostrarAlerta("Error al generar IPV: " + data.data.error, "Error");
+      mostrarAlerta("No hay datos para generar el IPV en el período seleccionado.", "Sin datos");
     }
   } catch (error) {
     mostrarAlerta("Error de red al intentar generar el IPV.", "Error de Red");
@@ -1023,17 +1025,14 @@ async function imprimirIPV() {
   }
 }
 
-function generarVistaImpresionIPV(datos, fInicio, fFin, tpv, producto) {
-  // Configuración de la nueva ventana
-  const ventana = window.open('', '_blank');
-  
-  // Textos y variables de cabecera
-  const textoTpv = tpv === "" ? "Todas las Áreas / Almacén Central" : tpv;
-  const textoProducto = producto === "" ? "Todos los Productos" : producto;
+function generarVistaImpresionIPV(productos, fInicio, fFin, tpv) {
+  // Configuración de texto para cabecera
+  const textoTpv = tpv === "" || !tpv ? "Todas las Áreas / Almacén Central" : tpv;
   const textoFechaInicio = fInicio ? fInicio.split('-').reverse().join('/') : "N/D";
   const textoFechaFin = fFin ? fFin.split('-').reverse().join('/') : "N/D";
   const fechaConteo = new Date().toLocaleDateString('es-MX');
 
+  // Construir el HTML del reporte
   let html = `
   <!DOCTYPE html>
   <html lang="es">
@@ -1043,21 +1042,17 @@ function generarVistaImpresionIPV(datos, fInicio, fFin, tpv, producto) {
       <style>
           body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; font-size: 11px; color: #000; }
           h2 { text-align: center; text-transform: uppercase; margin-bottom: 20px; font-size: 16px; text-decoration: underline; }
-          
-          /* Estilos de Tablas */
-          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
           .header-table td { border: none; padding: 5px; font-size: 12px; }
+          .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
           .data-table th, .data-table td { border: 1px solid #000; padding: 6px; text-align: center; }
           .data-table th { background-color: #f2f2f2; font-weight: bold; font-size: 11px; }
           .data-table .text-left { text-align: left; }
           .data-table .text-right { text-align: right; }
-          
-          /* Pie de Página */
           .footer-section { margin-top: 40px; width: 100%; }
+          .firmas-table { width: 100%; border-collapse: collapse; }
           .firmas-table td { border: none; text-align: center; vertical-align: bottom; height: 60px; width: 33%; }
           .linea-firma { border-top: 1px solid #000; padding-top: 5px; margin: 0 20px; font-weight: bold; }
-          
-          /* Ocultar botón al imprimir */
           .btn-imprimir { display: block; margin: 30px auto; padding: 12px 25px; background-color: #007bff; color: white; border: none; border-radius: 5px; font-size: 1rem; cursor: pointer; font-weight: bold; }
           @media print { .btn-imprimir { display: none; } }
       </style>
@@ -1065,7 +1060,7 @@ function generarVistaImpresionIPV(datos, fInicio, fFin, tpv, producto) {
   <body>
       <h2>Modelo de Formato IPV (Inventario de Precios y Ventas)</h2>
       
-      <!-- ENCABEZADO DEL DOCUMENTO -->
+      <!-- ENCABEZADO -->
       <table class="header-table">
           <tr>
               <td width="50%"><strong>Nombre del Negocio / Actividad:</strong> Sistema TPV / Almacén</td>
@@ -1079,77 +1074,69 @@ function generarVistaImpresionIPV(datos, fInicio, fFin, tpv, producto) {
           </tr>
       </table>
 
-      <!-- TABLA DE REGISTRO DE PRODUCTOS -->
+      <!-- TABLA DE PRODUCTOS -->
       <table class="data-table">
           <thead>
               <tr>
-                  <th>Código del Producto</th>
-                  <th>Descripción del Producto</th>
-                  <th>Unidad de Medida</th>
-                  <th>Precio de Venta Unitario (CUP)</th>
-                  <th>Inventario Inicial (Cantidad)</th>
-                  <th>Entradas (Compras / Producción)</th>
-                  <th>Salidas (Ventas / Consumo)</th>
-                  <th>Inventario Final (Cantidad)</th>
-                  <th>Valor Total del Inventario (CUP)</th>
+                  <th>Código</th>
+                  <th>Descripción</th>
+                  <th>U.M.</th>
+                  <th>Precio Venta</th>
+                  <th>Inventario Inicial</th>
+                  <th>Entradas (Compras)</th>
+                  <th>Salidas (Ventas)</th>
+                  <th>Inventario Final</th>
+                  <th>Valor Total</th>
               </tr>
           </thead>
           <tbody>
   `;
 
-  const desglose = datos.desgloseProducto;
   let valorInventarioGlobal = 0;
 
-  if (desglose && Object.keys(desglose).length > 0) {
-      const productosOrdenados = Object.keys(desglose).sort();
-      
-      for (const nombreProducto of productosOrdenados) {
-          const info = desglose[nombreProducto];
-          
-          // Buscar producto en el catálogo local para obtener su ID, Precio y Costo real
-          const prodLocal = catalogoLocal.find(p => p.nombre === nombreProducto) || {};
-          
-          const codigo = prodLocal.id || "S/C";
-          const um = "unidad"; // Medida estándar, ajustable si tienes la variable en DB
-          const precioVenta = parseFloat(prodLocal.precio) || 0;
-          
-          // Variables de movimiento
-          const salidas = parseFloat(info.cantidad) || 0;
-          const inventarioFinal = info.stock !== undefined ? parseFloat(info.stock) : (parseFloat(prodLocal.existencia) || 0);
-          
-          // Como en el dashboard base no tenemos sumatoria pura de entradas en el rango, 
-          // calculamos el Inventario Inicial matemáticamente: (Inicial = Final + Salidas - Entradas)
-          const entradas = 0; 
-          const inventarioInicial = inventarioFinal + salidas - entradas;
-          
-          // Cálculo del Valor
-          const valorTotalLinea = inventarioFinal * precioVenta;
-          valorInventarioGlobal += valorTotalLinea;
+  if (productos && productos.length > 0) {
+    // Ordenar alfabéticamente
+    productos.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-          html += `
-              <tr>
-                  <td>${codigo}</td>
-                  <td class="text-left">${nombreProducto}</td>
-                  <td>${um}</td>
-                  <td class="text-right">${precioVenta.toFixed(2)}</td>
-                  <td>${inventarioInicial}</td>
-                  <td>${entradas}</td>
-                  <td>${salidas}</td>
-                  <td>${inventarioFinal}</td>
-                  <td class="text-right">${valorTotalLinea.toFixed(2)}</td>
-              </tr>
-          `;
-      }
+    for (const prod of productos) {
+      const codigo = prod.id || "S/C";
+      const precioVenta = prod.precio || 0;
+      const invInicial = prod.inventarioInicial || 0;
+      const entradas = prod.entradas || 0;
+      const salidas = prod.salidas || 0;
+      const invFinal = prod.stockFinal || 0;
+      const valorLinea = invFinal * precioVenta;
+      valorInventarioGlobal += valorLinea;
+
+      html += `
+        <tr>
+          <td>${codigo}</td>
+          <td class="text-left">${prod.nombre}</td>
+          <td>unidad</td>
+          <td class="text-right">${precioVenta.toFixed(2)}</td>
+          <td>${invInicial}</td>
+          <td>${entradas}</td>
+          <td>${salidas}</td>
+          <td>${invFinal}</td>
+          <td class="text-right">${valorLinea.toFixed(2)}</td>
+        </tr>
+      `;
+    }
   } else {
-      html += `<tr><td colspan="9" style="padding: 20px;">No se encontraron registros para los filtros aplicados.</td></tr>`;
+    html += `<tr><td colspan="9" style="padding: 20px;">No se encontraron productos en el catálogo.</td></tr>`;
   }
 
   html += `
           </tbody>
       </table>
       
-      <!-- PIE DEL DOCUMENTO Y FIRMAS -->
-      <div style="margin-top: 20px; font-size: 13px;">
+      <!-- RESUMEN FINAL -->
+      <div style="margin-top: 10px; text-align: right; font-size: 13px; font-weight: bold;">
+          Valor Total del Inventario: $${valorInventarioGlobal.toFixed(2)}
+      </div>
+
+      <!-- OBSERVACIONES Y FIRMAS -->
+      <div style="margin-top: 30px; font-size: 13px;">
           <strong>Observaciones:</strong> __________________________________________________________________________________________________<br><br>
           _____________________________________________________________________________________________________________________________
       </div>
@@ -1175,7 +1162,13 @@ function generarVistaImpresionIPV(datos, fInicio, fFin, tpv, producto) {
   </html>
   `;
 
-  // Renderizar la vista en la nueva pestaña
+  // Abrir la ventana emergente y escribir el HTML
+  const ventana = window.open('', '_blank', 'width=1100,height=800');
+  if (!ventana) {
+    mostrarAlerta("No se pudo abrir la ventana de impresión. Permite ventanas emergentes.", "Error");
+    return;
+  }
+
   ventana.document.open();
   ventana.document.write(html);
   ventana.document.close();
