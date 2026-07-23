@@ -8,6 +8,7 @@
     <!-- Icono de la aplicación (Favicon) -->
     <link rel="icon" type="image/png" href="FavIcon.png">
     <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
@@ -112,35 +113,39 @@
                     </div>
                 </div>
                 <!-- Añadir en la sección "panel-derecho" o donde prefieras -->
-            <div class="card card-primary mt-20">
-                <h4>🤖 Asistente IA de Compras</h4>
-                <p class="subtitle">Analiza el stock crítico y genera sugerencias de pedido.</p>
-                <button onclick="solicitarAnalisisIA()" class="btn-primary" style="width: 100%;">
-                    Generar Análisis Predictivo
-                </button>
+                <div class="card card-primary mt-20">
+                    <h4>🤖 Asistente IA de Compras</h4>
+                    <p class="subtitle">Analiza el stock crítico y genera sugerencias de pedido.</p>
+                    <button onclick="solicitarAnalisisIA()" class="btn-primary" style="width: 100%;">
+                        Generar Análisis Predictivo
+                    </button>
 
-                <!-- Contenedor para mostrar la respuesta -->
-                <div id="resultado-ia"
-                    style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px; display: none; font-size: 0.9rem; white-space: pre-wrap;">
+                    <!-- Contenedor para mostrar la respuesta -->
+                    <div id="resultado-ia"
+                        style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px; display: none; font-size: 0.9rem; white-space: pre-wrap;">
+                    </div>
                 </div>
-            </div>
-            <!-- CHATBOT NLP - Añadir en el panel izquierdo o derecho -->
-<div class="card mt-20" style="border-top: 4px solid #6f42c1;">
-    <h4 style="color: #6f42c1;">💬 Chatbot de Inventario</h4>
-    <p class="subtitle">Pregunta en lenguaje natural sobre stock o precios.</p>
-    
-    <div class="form-group">
-        <input type="text" id="chat-nlp-input" placeholder='Ej: "¿Cuántas Coca Colas quedan en TPV_1 y a qué precio?"' onkeypress="manejarEnterChat(event)" style="border-color: #e0d4f5;">
-    </div>
-    
-    <button onclick="consultarChatbotNLP()" class="btn-primary" style="width: 100%; background-color: #6f42c1; border-color: #6f42c1;">
-        Preguntar al Asistente
-    </button>
+                <!-- CHATBOT NLP - Añadir en el panel izquierdo o derecho -->
+                <div class="card mt-20" style="border-top: 4px solid #6f42c1;">
+                    <h4 style="color: #6f42c1;">💬 Chatbot de Inventario</h4>
+                    <p class="subtitle">Pregunta en lenguaje natural sobre stock o precios.</p>
 
-    <!-- Contenedor para la respuesta de la IA -->
-    <div id="chat-nlp-resultado" style="margin-top: 15px; padding: 12px; background: #f8f5ff; border-left: 4px solid #6f42c1; border-radius: 4px; display: none; font-size: 0.95rem; white-space: pre-wrap; line-height: 1.4;">
-    </div>
-</div>
+                    <div class="form-group">
+                        <input type="text" id="chat-nlp-input"
+                            placeholder='Ej: "¿Cuántas Coca Colas quedan en TPV_1 y a qué precio?"'
+                            onkeypress="manejarEnterChat(event)" style="border-color: #e0d4f5;">
+                    </div>
+
+                    <button onclick="consultarChatbotNLP()" class="btn-primary"
+                        style="width: 100%; background-color: #6f42c1; border-color: #6f42c1;">
+                        Preguntar al Asistente
+                    </button>
+
+                    <!-- Contenedor para la respuesta de la IA -->
+                    <div id="chat-nlp-resultado"
+                        style="margin-top: 15px; padding: 12px; background: #f8f5ff; border-left: 4px solid #6f42c1; border-radius: 4px; display: none; font-size: 0.95rem; white-space: pre-wrap; line-height: 1.4;">
+                    </div>
+                </div>
 
             </section>
 
@@ -272,13 +277,25 @@
                             <!-- Llenado dinámicamente vía JS -->
                         </select>
                     </div>
+                    <div>
 
-                    <!-- Grupo de botones corregido y alineado -->
-                    <div style="display: flex; gap: 10px; align-items: flex-end;">
-                        <button onclick="cargarDatosDashboard()" class="btn-primary btn-sm btn-filtrar">Aplicar /
-                            Refrescar</button>
-                        <button onclick="imprimirIPV()" class="btn-secondary btn-sm btn-filtrar"
-                            style="background-color: #17a2b8;">🖨️ Imprimir IPV</button>
+                        <!-- Grupo de botones corregido y alineado -->
+                        <div
+                            style="display: flex; gap: 10px; align-items: stretch; flex-direction: row; flex-wrap: wrap; justify-content: center;">
+                            <button onclick="cargarDatosDashboard()" class="btn-primary btn-sm btn-filtrar">Aplicar /
+                                Refrescar</button>
+                            <button onclick="imprimirIPV()" class="btn-secondary btn-sm btn-filtrar"
+                                style="background-color: #17a2b8;">🖨️ Imprimir IPV</button>
+                            <!-- NUEVO: Botón de Transferencias -->
+                            <button onclick="imprimirTransferencias()" class="btn-secondary btn-sm btn-filtrar"
+                                style="background-color: #6f42c1; color: white;">🖨️ Imprimir Transferencias</button>
+                            <!-- NUEVO: Botón de Egresos de Efectivo -->
+                            <button onclick="imprimirEgresos()" class="btn-secondary btn-sm btn-filtrar"
+                                style="background-color: #dc3545; color: white;">🖨️ Imprimir Egresos</button>
+                            <button onclick="imprimirVentas()" class="btn-secondary btn-sm btn-filtrar"
+                                style="background-color: #28a745; color: white;">🖨️ Imprimir Ventas</button>
+                        </div>
+
                     </div>
                 </div>
             </div>
