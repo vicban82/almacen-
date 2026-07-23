@@ -69,14 +69,14 @@ async function iniciarSesion() {
       await cargarCatalogo();
       ocultarLoading();
       const inputClave = document.getElementById("clave-input");
-      inputClave.value = '';           // Limpiar valor
-      inputClave.disabled = true;      // Deshabilitar (el navegador no lo considera activo)
-      inputClave.type = 'text';        // Cambiar tipo para que no sea "password"
+      inputClave.value = ""; // Limpiar valor
+      inputClave.disabled = true; // Deshabilitar (el navegador no lo considera activo)
+      inputClave.type = "text"; // Cambiar tipo para que no sea "password"
       return;
     } else {
       ocultarLoading();
       return mostrarAlerta(
-        "Modo sin conexión: Clave incorrecta o necesita iniciar sesión con internet al menos una vez.", 
+        "Modo sin conexión: Clave incorrecta o necesita iniciar sesión con internet al menos una vez.",
         "Error de Acceso"
       );
     }
@@ -99,10 +99,16 @@ async function iniciarSesion() {
       chequearNotificacionesSilencioso();
       setInterval(chequearNotificacionesSilencioso, 60000);
     } else {
-      mostrarAlerta(data.data.error || "Clave incorrecta o no tiene permisos de Almacén.", "Error");
+      mostrarAlerta(
+        data.data.error || "Clave incorrecta o no tiene permisos de Almacén.",
+        "Error"
+      );
     }
   } catch (error) {
-    mostrarAlerta("Error de conexión con el servidor, vuelva a intentarlo, vuelva a intentarlo., vuelva a intentarlo.", "Error de Red");
+    mostrarAlerta(
+      "Error de conexión con el servidor, vuelva a intentarlo, vuelva a intentarlo., vuelva a intentarlo.",
+      "Error de Red"
+    );
   } finally {
     ocultarLoading();
   }
@@ -148,7 +154,10 @@ async function cargarCatalogo() {
       renderizarCatalogo();
       actualizarSelectTransferencias();
     } else {
-      mostrarAlerta("No hay internet y no hay datos guardados localmente.", "Modo Offline");
+      mostrarAlerta(
+        "No hay internet y no hay datos guardados localmente.",
+        "Modo Offline"
+      );
     }
   } finally {
     ocultarLoading();
@@ -162,49 +171,55 @@ function renderizarCatalogo() {
   catalogoLocal.forEach((prod) => {
     const minAlerta = Number(prod.stock_minimo) || 0;
     const stockActual = Number(prod.existencia) || 0;
-    
+
     const item = document.createElement("div");
     item.className = "inventario-item";
     item.innerHTML = `
             <div>
                 <strong>${prod.nombre}</strong> <small>(${prod.id})</small><br>
                 <span class="stock-badge ${
-                  (minAlerta > 0 && stockActual <= minAlerta) ? "bajo-stock" : ""
+                  minAlerta > 0 && stockActual <= minAlerta ? "bajo-stock" : ""
                 }">Stock: ${stockActual}</span>
             </div>
             <div class="precios" style="text-align: right;">
                 Costo: $${prod.inversion} | Venta: $${prod.precio}<br>
-                <button class="btn-edit" onclick="abrirModalEdicion('${prod.id}')">✏️ Editar</button>
+                <button class="btn-edit" onclick="abrirModalEdicion('${
+                  prod.id
+                }')">✏️ Editar</button>
             </div>
         `;
     contenedor.appendChild(item);
   });
 }
 
-
 function actualizarSelectTransferencias() {
-    const select = document.getElementById("trans-producto");
-    const selectMerma = document.getElementById("merma-producto"); 
-    const selectProv = document.getElementById("prov-producto"); 
-  
-    if (select) select.innerHTML = '<option value="">Seleccione un producto...</option>';
-    if (selectMerma) selectMerma.innerHTML = '<option value="">Seleccione un producto...</option>';
-    if (selectProv) selectProv.innerHTML = '<option value="">Seleccione un producto...</option>'; 
-  
-    catalogoLocal.forEach((p) => {
-      const opcionBase = `<option value="${p.nombre}">${p.nombre}</option>`;
-  
-      if (p.existencia > 0) {
-          if (select) select.innerHTML += opcionBase;
-          if (selectMerma) selectMerma.innerHTML += opcionBase;
-      }
-      
-      if (selectProv) {
-          selectProv.innerHTML += opcionBase;
-      }
-    });
-  }
-  
+  const select = document.getElementById("trans-producto");
+  const selectMerma = document.getElementById("merma-producto");
+  const selectProv = document.getElementById("prov-producto");
+
+  if (select)
+    select.innerHTML = '<option value="">Seleccione un producto...</option>';
+  if (selectMerma)
+    selectMerma.innerHTML =
+      '<option value="">Seleccione un producto...</option>';
+  if (selectProv)
+    selectProv.innerHTML =
+      '<option value="">Seleccione un producto...</option>';
+
+  catalogoLocal.forEach((p) => {
+    const opcionBase = `<option value="${p.nombre}">${p.nombre}</option>`;
+
+    if (p.existencia > 0) {
+      if (select) select.innerHTML += opcionBase;
+      if (selectMerma) selectMerma.innerHTML += opcionBase;
+    }
+
+    if (selectProv) {
+      selectProv.innerHTML += opcionBase;
+    }
+  });
+}
+
 function filtrarCatalogo() {
   const texto = document.getElementById("buscar-producto").value.toLowerCase();
   const items = document.querySelectorAll(".inventario-item");
@@ -223,7 +238,8 @@ async function ejecutarTransferencia() {
   const destino = document.getElementById("trans-destino").value;
 
   if (!producto) return mostrarAlerta("Seleccione un producto", "Atención");
-  if (!cantidad || cantidad <= 0) return mostrarAlerta("Ingrese una cantidad válida", "Atención");
+  if (!cantidad || cantidad <= 0)
+    return mostrarAlerta("Ingrese una cantidad válida", "Atención");
 
   const payload = {
     action: "crear_movimiento",
@@ -237,7 +253,10 @@ async function ejecutarTransferencia() {
     localStorage.setItem("catalogo_cache", JSON.stringify(catalogoLocal));
 
     renderizarCatalogo();
-    mostrarAlerta("Sin conexión. La transferencia se guardó localmente y se enviará al recuperar la red.", "Modo Offline");
+    mostrarAlerta(
+      "Sin conexión. La transferencia se guardó localmente y se enviará al recuperar la red.",
+      "Modo Offline"
+    );
     document.getElementById("trans-cantidad").value = "";
     return;
   }
@@ -269,8 +288,13 @@ async function ejecutarMerma() {
   const cantidad = parseInt(document.getElementById("merma-cantidad").value);
   const motivo = document.getElementById("merma-motivo").value.trim();
 
-  if (!producto) return mostrarAlerta("Seleccione un producto para la baja.", "Atención");
-  if (!cantidad || cantidad <= 0) return mostrarAlerta("Ingrese una cantidad válida a descontar.", "Atención");
+  if (!producto)
+    return mostrarAlerta("Seleccione un producto para la baja.", "Atención");
+  if (!cantidad || cantidad <= 0)
+    return mostrarAlerta(
+      "Ingrese una cantidad válida a descontar.",
+      "Atención"
+    );
 
   const payload = {
     action: "registrar_merma",
@@ -284,7 +308,10 @@ async function ejecutarMerma() {
     localStorage.setItem("catalogo_cache", JSON.stringify(catalogoLocal));
 
     renderizarCatalogo();
-    mostrarAlerta("Sin conexión. La merma se guardó localmente y se descontará en el servidor al recuperar la red.", "Modo Offline");
+    mostrarAlerta(
+      "Sin conexión. La merma se guardó localmente y se descontará en el servidor al recuperar la red.",
+      "Modo Offline"
+    );
     document.getElementById("merma-cantidad").value = "";
     document.getElementById("merma-motivo").value = "";
     return;
@@ -323,23 +350,40 @@ async function crearProducto() {
   const inversion = parseFloat(document.getElementById("prod-inversion").value);
   const precio = parseFloat(document.getElementById("prod-precio").value);
   const stock = parseInt(document.getElementById("prod-stock").value) || 0;
-  const stockMinimo = parseInt(document.getElementById("prod-stock-minimo").value) || 0;
+  const stockMinimo =
+    parseInt(document.getElementById("prod-stock-minimo").value) || 0;
 
   if (!id || !nombre || isNaN(inversion) || isNaN(precio)) {
-    return mostrarAlerta("Por favor complete todos los campos obligatorios correctamente.", "Atención");
+    return mostrarAlerta(
+      "Por favor complete todos los campos obligatorios correctamente.",
+      "Atención"
+    );
   }
 
   const payload = {
     action: "crear_producto",
-    payload: { id, nombre, division, inversion, precio, stock_inicial: stock, stock_minimo: stockMinimo },
+    payload: {
+      id,
+      nombre,
+      division,
+      inversion,
+      precio,
+      stock_inicial: stock,
+      stock_minimo: stockMinimo,
+    },
   };
 
   if (!navigator.onLine) {
     encolarAccionLocal(payload);
 
     const nuevoProducto = {
-      id: id, nombre: nombre, division: division, inversion: inversion,
-      precio: precio, existencia: stock, stock_minimo: stockMinimo,
+      id: id,
+      nombre: nombre,
+      division: division,
+      inversion: inversion,
+      precio: precio,
+      existencia: stock,
+      stock_minimo: stockMinimo,
     };
 
     catalogoLocal.push(nuevoProducto);
@@ -348,7 +392,10 @@ async function crearProducto() {
     renderizarCatalogo();
     actualizarSelectTransferencias();
 
-    mostrarAlerta("Sin conexión. El producto se guardó localmente y se subirá al servidor al recuperar la red.", "Modo Offline");
+    mostrarAlerta(
+      "Sin conexión. El producto se guardó localmente y se subirá al servidor al recuperar la red.",
+      "Modo Offline"
+    );
 
     document.getElementById("prod-id").value = "";
     document.getElementById("prod-nombre").value = "";
@@ -376,7 +423,7 @@ async function crearProducto() {
       document.getElementById("prod-inversion").value = "";
       document.getElementById("prod-precio").value = "";
       document.getElementById("prod-stock").value = "";
-      await cargarCatalogo(); 
+      await cargarCatalogo();
     } else {
       mostrarAlerta("Error: " + data.data.error, "Error");
     }
@@ -388,14 +435,15 @@ async function crearProducto() {
 }
 
 function abrirModalEdicion(id) {
-  const prod = catalogoLocal.find(p => p.id === id);
+  const prod = catalogoLocal.find((p) => p.id === id);
   if (!prod) return mostrarAlerta("Producto no encontrado.", "Error");
 
   document.getElementById("edit-prod-id").value = prod.id;
   document.getElementById("edit-prod-nombre").innerText = prod.nombre;
   document.getElementById("edit-prod-inversion").value = prod.inversion;
   document.getElementById("edit-prod-precio").value = prod.precio;
-  document.getElementById("edit-prod-stock-minimo").value = prod.stock_minimo || 0;
+  document.getElementById("edit-prod-stock-minimo").value =
+    prod.stock_minimo || 0;
 
   document.getElementById("modal-edicion").style.display = "flex";
 }
@@ -406,19 +454,30 @@ function cerrarModalEdicion() {
 
 async function guardarEdicionProducto() {
   const id = document.getElementById("edit-prod-id").value;
-  const inversion = parseFloat(document.getElementById("edit-prod-inversion").value);
+  const inversion = parseFloat(
+    document.getElementById("edit-prod-inversion").value
+  );
   const precio = parseFloat(document.getElementById("edit-prod-precio").value);
-  const stockMinimo = parseInt(document.getElementById("edit-prod-stock-minimo").value) || 0;
+  const stockMinimo =
+    parseInt(document.getElementById("edit-prod-stock-minimo").value) || 0;
 
   if (isNaN(inversion) || isNaN(precio) || isNaN(stockMinimo)) {
-    return mostrarAlerta("Por favor, ingrese valores numéricos válidos.", "Atención");
+    return mostrarAlerta(
+      "Por favor, ingrese valores numéricos válidos.",
+      "Atención"
+    );
   }
 
   mostrarLoading("Actualizando producto en Base de Datos...");
   try {
     const payload = {
       action: "actualizar_precio_producto",
-      payload: { id_producto: id, nueva_inversion: inversion, nuevo_precio: precio, nuevo_stock_minimo: stockMinimo },
+      payload: {
+        id_producto: id,
+        nueva_inversion: inversion,
+        nuevo_precio: precio,
+        nuevo_stock_minimo: stockMinimo,
+      },
     };
     const response = await fetch(API_URL, {
       method: "POST",
@@ -429,7 +488,7 @@ async function guardarEdicionProducto() {
     if (data.success) {
       mostrarAlerta(data.data.mensaje, "Éxito");
       cerrarModalEdicion();
-      await cargarCatalogo(); 
+      await cargarCatalogo();
     } else {
       mostrarAlerta("Error: " + data.data.error, "Error");
     }
@@ -445,7 +504,7 @@ async function guardarEdicionProducto() {
 // ==========================================
 let notificacionesPendientes = [];
 let alertasStockPendientes = [];
-let alertasTPVPendientes = []; 
+let alertasTPVPendientes = [];
 
 async function chequearNotificacionesSilencioso() {
   try {
@@ -462,36 +521,38 @@ async function chequearNotificacionesSilencioso() {
     if (data.success) {
       notificacionesPendientes = data.data.transferencias || [];
       alertasTPVPendientes = data.data.alertasStockTPV || [];
-      
+
       alertasStockPendientes = catalogoLocal.filter((prod) => {
         const min = Number(prod.stock_minimo) || 0;
         const actual = Number(prod.existencia) || 0;
         return min > 0 && actual <= min;
       });
 
-
       const btnNotificaciones = document.getElementById("btn-notificaciones");
       const badge = document.getElementById("badge-notificaciones");
       //const totalAvisos = notificacionesPendientes.length + alertasStockPendientes.length + alertasTPVPendientes.length;
       cargarIncidencias(); // Descarga silenciosa de descuadres
 
-      window.actualizarNotificacionGlobal = function() {
+      window.actualizarNotificacionGlobal = function () {
         const btnNotificaciones = document.getElementById("btn-notificaciones");
         const badge = document.getElementById("badge-notificaciones");
-        
-        const totalAvisos = notificacionesPendientes.length + alertasStockPendientes.length + alertasTPVPendientes.length + incidenciasGlobales.length;
+
+        const totalAvisos =
+          notificacionesPendientes.length +
+          alertasStockPendientes.length +
+          alertasTPVPendientes.length +
+          incidenciasGlobales.length;
 
         if (totalAvisos > 0) {
-            btnNotificaciones.style.display = "inline-block";
-            btnNotificaciones.classList.add("boton-alerta");
-            badge.innerText = totalAvisos;
+          btnNotificaciones.style.display = "inline-block";
+          btnNotificaciones.classList.add("boton-alerta");
+          badge.innerText = totalAvisos;
         } else {
-            btnNotificaciones.style.display = "none";
-            btnNotificaciones.classList.remove("boton-alerta");
+          btnNotificaciones.style.display = "none";
+          btnNotificaciones.classList.remove("boton-alerta");
         }
         actualizarNotificacionGlobal(); // Ejecutar inmediatamente
-    }
-
+      };
     }
   } catch (error) {
     console.warn("Fallo silencioso al chequear notificaciones.");
@@ -502,15 +563,18 @@ function abrirModalNotificaciones() {
   const contenedor = document.getElementById("lista-notificaciones");
   contenedor.innerHTML = "";
 
-  const totalAvisos = notificacionesPendientes.length + alertasStockPendientes.length + alertasTPVPendientes.length;
+  const totalAvisos =
+    notificacionesPendientes.length +
+    alertasStockPendientes.length +
+    alertasTPVPendientes.length;
 
   if (totalAvisos === 0) {
     contenedor.innerHTML = "<p>No hay avisos ni transferencias pendientes.</p>";
   } else {
     // 1. Renderizar Transferencias Pendientes
-    notificacionesPendientes.forEach(notif => {
-      const div = document.createElement('div');
-      div.className = 'notificacion-item alerta-transferencia'; 
+    notificacionesPendientes.forEach((notif) => {
+      const div = document.createElement("div");
+      div.className = "notificacion-item alerta-transferencia";
       div.innerHTML = `
           <div class="alerta-texto"><strong>Origen:</strong> ${notif.origen}</div>
           <div class="alerta-texto"><strong>Producto:</strong> ${notif.producto}</div>
@@ -527,12 +591,12 @@ function abrirModalNotificaciones() {
     alertasStockPendientes.forEach((prod) => {
       const div = document.createElement("div");
       div.className = "notificacion-item alerta-critica";
-      
+
       const minAlerta = Number(prod.stock_minimo) || 0;
       const stockActual = Number(prod.existencia) || 0;
-      
-      let cantidadSugerida = (minAlerta * 2) - stockActual;
-      if (cantidadSugerida <= 0) cantidadSugerida = minAlerta; 
+
+      let cantidadSugerida = minAlerta * 2 - stockActual;
+      if (cantidadSugerida <= 0) cantidadSugerida = minAlerta;
 
       div.innerHTML = `
         <div class="alerta-titulo">⚠️ Stock Crítico Detectado</div>
@@ -562,13 +626,13 @@ function abrirModalNotificaciones() {
     alertasTPVPendientes.forEach((alerta) => {
       const div = document.createElement("div");
       div.className = "notificacion-item alerta-critica";
-      
+
       // Cálculo sugerido para el reabastecimiento
-      let cantidadSugerida = (alerta.minimo * 2) - alerta.stock;
-      if (cantidadSugerida <= 0) cantidadSugerida = alerta.minimo || 5; 
+      let cantidadSugerida = alerta.minimo * 2 - alerta.stock;
+      if (cantidadSugerida <= 0) cantidadSugerida = alerta.minimo || 5;
 
       // Generar un ID limpio sin espacios para el DOM
-      const idLimpio = alerta.producto.replace(/\s/g, '');
+      const idLimpio = alerta.producto.replace(/\s/g, "");
 
       div.innerHTML = `
         <div class="alerta-titulo">🚨 Urgente: Stock Crítico en ${alerta.tpv}</div>
@@ -593,18 +657,18 @@ function abrirModalNotificaciones() {
   document.getElementById("modal-notificaciones").style.display = "flex";
 }
 
-  
 function cerrarModalNotificaciones() {
   document.getElementById("modal-notificaciones").style.display = "none";
 }
 
 async function aprobarTransferencia(idFila) {
   const firmaRaw = document.getElementById(`firma-${idFila}`).value.trim();
-  if (!firmaRaw) return mostrarAlerta("Debe ingresar su firma digital.", "Atención");
+  if (!firmaRaw)
+    return mostrarAlerta("Debe ingresar su firma digital.", "Atención");
 
   const firmaB64 = btoa(firmaRaw);
   mostrarLoading("Aprobando transferencia...");
-  
+
   try {
     const payload = {
       action: "aprobar_movimiento",
@@ -620,8 +684,8 @@ async function aprobarTransferencia(idFila) {
     if (data.success) {
       mostrarAlerta(data.data.mensaje, "Éxito");
       cerrarModalNotificaciones();
-      await chequearNotificacionesSilencioso(); 
-      await cargarCatalogo(); 
+      await chequearNotificacionesSilencioso();
+      await cargarCatalogo();
     } else {
       mostrarAlerta("Error: " + data.data.error, "Error");
     }
@@ -644,7 +708,14 @@ function abrirDashboard() {
   document.getElementById("almacen-screen").classList.remove("active");
   document.getElementById("dashboard-screen").classList.add("active");
 
-  const hoy = new Date().toISOString().split("T")[0];
+  const fechaActual = new Date();
+  const hoy =
+    fechaActual.getFullYear() +
+    "-" +
+    String(fechaActual.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(fechaActual.getDate()).padStart(2, "0");
+
   if (!document.getElementById("dash-fecha-inicio").value)
     document.getElementById("dash-fecha-inicio").value = hoy;
   if (!document.getElementById("dash-fecha-fin").value)
@@ -692,25 +763,35 @@ async function cargarDatosDashboard() {
 }
 
 function renderizarDashboard(datos) {
-  document.getElementById("kpi-ventas").innerText = `$${datos.global.ventas.toFixed(2)}`;
-  document.getElementById("kpi-ganancia").innerText = `$${datos.global.ganancia.toFixed(2)}`;
+  document.getElementById(
+    "kpi-ventas"
+  ).innerText = `$${datos.global.ventas.toFixed(2)}`;
+  document.getElementById(
+    "kpi-ganancia"
+  ).innerText = `$${datos.global.ganancia.toFixed(2)}`;
   document.getElementById("kpi-stock").innerText = `${datos.global.stock} Unds`;
 
   if (document.getElementById("kpi-credito")) {
-    document.getElementById("kpi-credito").innerText = `$${datos.global.ventasCredito.toFixed(2)}`;
+    document.getElementById(
+      "kpi-credito"
+    ).innerText = `$${datos.global.ventasCredito.toFixed(2)}`;
   }
   if (document.getElementById("kpi-deuda")) {
-    document.getElementById("kpi-deuda").innerText = `$${datos.global.deudaGlobal.toFixed(2)}`;
+    document.getElementById(
+      "kpi-deuda"
+    ).innerText = `$${datos.global.deudaGlobal.toFixed(2)}`;
   }
 
   // NUEVO: Pinta el valor descontando los retiros
   if (document.getElementById("kpi-efectivo")) {
-    document.getElementById("kpi-efectivo").innerText = `$${(datos.global.efectivoEnCaja || 0).toFixed(2)}`;
+    document.getElementById("kpi-efectivo").innerText = `$${(
+      datos.global.efectivoEnCaja || 0
+    ).toFixed(2)}`;
   }
 
   const tbodyTPV = document.getElementById("tbody-eficiencia");
   if (tbodyTPV) {
-    tbodyTPV.innerHTML = ""; 
+    tbodyTPV.innerHTML = "";
     const desglose = datos.desgloseTPV;
 
     if (desglose && Object.keys(desglose).length > 0) {
@@ -718,21 +799,33 @@ function renderizarDashboard(datos) {
         const info = desglose[tpv];
         const horas = info.horas > 0 ? info.horas : 1;
         const eficiencia = info.ganancia / horas;
-        const claseEficiencia = eficiencia > 0 ? "eficiencia-alta" : "eficiencia-baja";
+        const claseEficiencia =
+          eficiencia > 0 ? "eficiencia-alta" : "eficiencia-baja";
 
         tbodyTPV.innerHTML += `
                        <tr>
                            <td style="padding: 12px; border-bottom: 1px solid #ddd;"><strong>${tpv}</strong></td>
-                           <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">${info.stock || 0}</td>
-                           <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">${info.horas || 0}</td>
-                           <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right;">$${(info.ventas || 0).toFixed(2)}</td>
-                           <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right; color: var(--success-color); font-weight: bold;">$${(info.ganancia || 0).toFixed(2)}</td>
-                           <td class="${claseEficiencia}" style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right;">$${eficiencia.toFixed(2)}/hr</td>
+                           <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">${
+                             info.stock || 0
+                           }</td>
+                           <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">${
+                             info.horas || 0
+                           }</td>
+                           <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right;">$${(
+                             info.ventas || 0
+                           ).toFixed(2)}</td>
+                           <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right; color: var(--success-color); font-weight: bold;">$${(
+                             info.ganancia || 0
+                           ).toFixed(2)}</td>
+                           <td class="${claseEficiencia}" style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right;">$${eficiencia.toFixed(
+          2
+        )}/hr</td>
                        </tr>
                    `;
       }
     } else {
-      tbodyTPV.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:15px;">No hay datos de rendimiento para mostrar</td></tr>';
+      tbodyTPV.innerHTML =
+        '<tr><td colspan="6" style="text-align:center; padding:15px;">No hay datos de rendimiento para mostrar</td></tr>';
     }
   }
 
@@ -743,14 +836,21 @@ function renderizarDashboard(datos) {
       datos.top3.forEach((prod) => {
         tbodyTop3.innerHTML += `
                     <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>${prod.nombre}</strong></td>
-                        <td style="text-align: center; padding: 8px; border-bottom: 1px solid #eee;">${prod.cantidad}</td>
-                        <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee; color: var(--success-color); font-weight: bold;">$${prod.ventas.toFixed(2)}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>${
+                          prod.nombre
+                        }</strong></td>
+                        <td style="text-align: center; padding: 8px; border-bottom: 1px solid #eee;">${
+                          prod.cantidad
+                        }</td>
+                        <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee; color: var(--success-color); font-weight: bold;">$${prod.ventas.toFixed(
+                          2
+                        )}</td>
                     </tr>
                 `;
       });
     } else {
-      tbodyTop3.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:10px;">No hay datos de ventas</td></tr>';
+      tbodyTop3.innerHTML =
+        '<tr><td colspan="3" style="text-align:center; padding:10px;">No hay datos de ventas</td></tr>';
     }
   }
 
@@ -761,41 +861,55 @@ function renderizarDashboard(datos) {
       datos.bottom3.forEach((prod) => {
         tbodyBottom3.innerHTML += `
                     <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>${prod.nombre}</strong></td>
-                        <td style="text-align: center; padding: 8px; border-bottom: 1px solid #eee;">${prod.cantidad}</td>
-                        <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee; color: var(--text-color); font-weight: bold;">$${prod.ventas.toFixed(2)}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>${
+                          prod.nombre
+                        }</strong></td>
+                        <td style="text-align: center; padding: 8px; border-bottom: 1px solid #eee;">${
+                          prod.cantidad
+                        }</td>
+                        <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee; color: var(--text-color); font-weight: bold;">$${prod.ventas.toFixed(
+                          2
+                        )}</td>
                     </tr>
                 `;
       });
     } else {
-      tbodyBottom3.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:10px;">No hay datos de ventas</td></tr>';
+      tbodyBottom3.innerHTML =
+        '<tr><td colspan="3" style="text-align:center; padding:10px;">No hay datos de ventas</td></tr>';
     }
   }
 
- const tbodyProductos = document.getElementById("tbody-productos");
- if (tbodyProductos) {
-   tbodyProductos.innerHTML = "";
-   const desglose = datos.desgloseProducto;
+  const tbodyProductos = document.getElementById("tbody-productos");
+  if (tbodyProductos) {
+    tbodyProductos.innerHTML = "";
+    const desglose = datos.desgloseProducto;
 
-   if (desglose && Object.keys(desglose).length > 0) {
-     for (const nombreProducto in desglose) {
-       const info = desglose[nombreProducto];
-       tbodyProductos.innerHTML += `
+    if (desglose && Object.keys(desglose).length > 0) {
+      for (const nombreProducto in desglose) {
+        const info = desglose[nombreProducto];
+        tbodyProductos.innerHTML += `
            <tr>
                <td style="padding: 12px; border-bottom: 1px solid #ddd;"><strong>${nombreProducto}</strong></td>
                <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; color: var(--primary-color); font-weight: bold;">
                    ${info.stock !== undefined ? info.stock : 0}
                </td>
-               <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">${info.cantidad}</td>
-               <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right;">$${info.ventas.toFixed(2)}</td>
-               <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right; color: var(--success-color); font-weight: bold;">$${info.ganancia.toFixed(2)}</td>
+               <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">${
+                 info.cantidad
+               }</td>
+               <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right;">$${info.ventas.toFixed(
+                 2
+               )}</td>
+               <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right; color: var(--success-color); font-weight: bold;">$${info.ganancia.toFixed(
+                 2
+               )}</td>
            </tr>
        `;
-     }
-   } else {
-     tbodyProductos.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:15px;">No hay datos de ventas para mostrar</td></tr>';
-   }
- }
+      }
+    } else {
+      tbodyProductos.innerHTML =
+        '<tr><td colspan="5" style="text-align:center; padding:15px;">No hay datos de ventas para mostrar</td></tr>';
+    }
+  }
 }
 
 // ==========================================================================
@@ -841,7 +955,16 @@ function setRangoFecha(rango) {
     inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   }
 
-  const formatDate = (date) => date.toISOString().split("T")[0];
+  const formatDate = (date) => {
+    return (
+      date.getFullYear() +
+      "-" +
+      String(date.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(date.getDate()).padStart(2, "0")
+    );
+  };
+
   document.getElementById("dash-fecha-inicio").value = formatDate(inicio);
   document.getElementById("dash-fecha-fin").value = formatDate(fin);
 
@@ -855,7 +978,9 @@ function validarFechas() {
   if (inputInicio.value && inputFin.value) {
     if (inputInicio.value > inputFin.value) {
       inputFin.value = inputInicio.value;
-      console.warn("La fecha 'Desde' no puede ser mayor que 'Hasta'. Se ha auto-corregido.");
+      console.warn(
+        "La fecha 'Desde' no puede ser mayor que 'Hasta'. Se ha auto-corregido."
+      );
     }
   }
 }
@@ -882,7 +1007,10 @@ async function sincronizarColaOffline() {
       const data = await response.json();
 
       if (!data.success) {
-        console.error("Fallo al procesar elemento de la cola:", data.data.error);
+        console.error(
+          "Fallo al procesar elemento de la cola:",
+          data.data.error
+        );
         fallos.push(colaAProcesar[i]);
       }
     } catch (err) {
@@ -897,29 +1025,43 @@ async function sincronizarColaOffline() {
 
   if (fallos.length === 0) {
     mostrarAlerta("Sincronización completada con éxito.", "Éxito");
-    cargarCatalogo(); 
+    cargarCatalogo();
   } else {
-    mostrarAlerta(`Sincronización parcial. Quedaron ${fallos.length} acciones pendientes.`, "Aviso");
+    mostrarAlerta(
+      `Sincronización parcial. Quedaron ${fallos.length} acciones pendientes.`,
+      "Aviso"
+    );
   }
 }
 
 // ==========================================================================
 // PROCESADOR AUTOMÁTICO DE ENVIÓ
 // ==========================================================================
-async function procesarSurtidoAutomatico(productoNombre, cantidadCalcular, productoId, destinoForzado = null) {
+async function procesarSurtidoAutomatico(
+  productoNombre,
+  cantidadCalcular,
+  productoId,
+  destinoForzado = null
+) {
   // Si viene un destino forzado (desde la alerta del TPV), lo usa. Si no, busca el select (alerta del Almacén).
   let destinoSeleccionado = destinoForzado;
-  
+
   if (!destinoSeleccionado) {
-      const selectDestino = document.getElementById(`surtido-destino-${productoId}`);
-      if(selectDestino) destinoSeleccionado = selectDestino.value;
+    const selectDestino = document.getElementById(
+      `surtido-destino-${productoId}`
+    );
+    if (selectDestino) destinoSeleccionado = selectDestino.value;
   }
 
-  if(!destinoSeleccionado) return mostrarAlerta("No se pudo determinar el destino de la transferencia.", "Error");
+  if (!destinoSeleccionado)
+    return mostrarAlerta(
+      "No se pudo determinar el destino de la transferencia.",
+      "Error"
+    );
 
   const confirmado = await mostrarConfirmacion(
-      "⚡ Confirmar Surtido Automático", 
-      `¿Confirmas el envío automatizado de ${cantidadCalcular} unidades de "${productoNombre}" hacia la sucursal ${destinoSeleccionado}?`
+    "⚡ Confirmar Surtido Automático",
+    `¿Confirmas el envío automatizado de ${cantidadCalcular} unidades de "${productoNombre}" hacia la sucursal ${destinoSeleccionado}?`
   );
 
   if (confirmado) {
@@ -931,7 +1073,6 @@ async function procesarSurtidoAutomatico(productoNombre, cantidadCalcular, produ
   }
 }
 
-
 // ==========================================================================
 // MÓDULO DE ENTRADA POR COMPRA / PROVEEDOR (Online & Offline)
 // ==========================================================================
@@ -940,8 +1081,16 @@ async function ejecutarEntradaProveedor() {
   const cantidad = parseInt(document.getElementById("prov-cantidad").value);
   const motivo = document.getElementById("prov-motivo").value.trim();
 
-  if (!producto) return mostrarAlerta("Por favor, seleccione un producto para ingresar stock.", "Atención");
-  if (!cantidad || cantidad <= 0) return mostrarAlerta("Ingrese una cantidad de entrada válida mayor a cero.", "Atención");
+  if (!producto)
+    return mostrarAlerta(
+      "Por favor, seleccione un producto para ingresar stock.",
+      "Atención"
+    );
+  if (!cantidad || cantidad <= 0)
+    return mostrarAlerta(
+      "Ingrese una cantidad de entrada válida mayor a cero.",
+      "Atención"
+    );
 
   const payload = {
     action: "registrar_entrada_proveedor",
@@ -953,14 +1102,18 @@ async function ejecutarEntradaProveedor() {
 
     const prodIndex = catalogoLocal.findIndex((p) => p.nombre === producto);
     if (prodIndex > -1) {
-      catalogoLocal[prodIndex].existencia = Number(catalogoLocal[prodIndex].existencia) + cantidad;
+      catalogoLocal[prodIndex].existencia =
+        Number(catalogoLocal[prodIndex].existencia) + cantidad;
     }
     localStorage.setItem("catalogo_cache", JSON.stringify(catalogoLocal));
 
     renderizarCatalogo();
     actualizarSelectTransferencias();
-    
-    mostrarAlerta("Operación local: Sin conexión a internet. La entrada se guardó en la cola local y se transmitirá automáticamente al recuperar red.", "Modo Offline");
+
+    mostrarAlerta(
+      "Operación local: Sin conexión a internet. La entrada se guardó en la cola local y se transmitirá automáticamente al recuperar red.",
+      "Modo Offline"
+    );
     document.getElementById("prov-cantidad").value = "";
     document.getElementById("prov-motivo").value = "";
     return;
@@ -978,12 +1131,15 @@ async function ejecutarEntradaProveedor() {
       mostrarAlerta(data.data.mensaje, "Éxito");
       document.getElementById("prov-cantidad").value = "";
       document.getElementById("prov-motivo").value = "";
-      await cargarCatalogo(); 
+      await cargarCatalogo();
     } else {
       mostrarAlerta("Error en Servidor: " + data.data.error, "Error");
     }
   } catch (error) {
-    mostrarAlerta("Error de red crítico. Verifique la conexión con el servidor.", "Error de Red");
+    mostrarAlerta(
+      "Error de red crítico. Verifique la conexión con el servidor.",
+      "Error de Red"
+    );
   } finally {
     ocultarLoading();
   }
@@ -1003,20 +1159,30 @@ async function imprimirIPV() {
   try {
     const payload = {
       action: "obtener_datos_ipv",
-      payload: { fechaInicio, fechaFin, tpvFiltro }
+      payload: { fechaInicio, fechaFin, tpvFiltro },
     };
-    
+
     const response = await fetch(API_URL, {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    
+
     const data = await response.json();
 
+    // NUEVA LÓGICA: Procesar el éxito o capturar el error del backend
     if (data.success && Array.isArray(data.data) && data.data.length > 0) {
       generarVistaImpresionIPV(data.data, fechaInicio, fechaFin, tpvFiltro);
+    } else if (!data.success) {
+      // Capturamos la excepción de las transferencias pendientes lanzada desde el backend
+      mostrarAlerta(
+        data.data.error || "Ocurrió un error al intentar generar el IPV.",
+        "Operación Bloqueada"
+      );
     } else {
-      mostrarAlerta("No hay datos para generar el IPV en el período seleccionado.", "Sin datos");
+      mostrarAlerta(
+        "No hay datos para generar el IPV en el período seleccionado.",
+        "Sin datos"
+      );
     }
   } catch (error) {
     mostrarAlerta("Error de red al intentar generar el IPV.", "Error de Red");
@@ -1027,10 +1193,13 @@ async function imprimirIPV() {
 
 function generarVistaImpresionIPV(productos, fInicio, fFin, tpv) {
   // Configuración de texto para cabecera
-  const textoTpv = tpv === "" || !tpv ? "Todas las Áreas / Almacén Central" : tpv;
-  const textoFechaInicio = fInicio ? fInicio.split('-').reverse().join('/') : "N/D";
-  const textoFechaFin = fFin ? fFin.split('-').reverse().join('/') : "N/D";
-  const fechaConteo = new Date().toLocaleDateString('es-MX');
+  const textoTpv =
+    tpv === "" || !tpv ? "Todas las Áreas / Almacén Central" : tpv;
+  const textoFechaInicio = fInicio
+    ? fInicio.split("-").reverse().join("/")
+    : "N/D";
+  const textoFechaFin = fFin ? fFin.split("-").reverse().join("/") : "N/D";
+  const fechaConteo = new Date().toLocaleDateString("es-MX");
 
   // Construir el HTML del reporte
   let html = `
@@ -1084,7 +1253,7 @@ function generarVistaImpresionIPV(productos, fInicio, fFin, tpv) {
                   <th>Precio Venta</th>
                   <th>Inventario Inicial</th>
                   <th>Entradas (Compras)</th>
-                  <th>Salidas (Ventas)</th>
+                  <th>Salidas (Ventas + Mermas)</th>
                   <th>Inventario Final</th>
                   <th>Valor Total</th>
               </tr>
@@ -1163,9 +1332,504 @@ function generarVistaImpresionIPV(productos, fInicio, fFin, tpv) {
   `;
 
   // Abrir la ventana emergente y escribir el HTML
-  const ventana = window.open('', '_blank', 'width=1100,height=800');
+  const ventana = window.open("", "_blank", "width=1100,height=800");
   if (!ventana) {
-    mostrarAlerta("No se pudo abrir la ventana de impresión. Permite ventanas emergentes.", "Error");
+    mostrarAlerta(
+      "No se pudo abrir la ventana de impresión. Permite ventanas emergentes.",
+      "Error"
+    );
+    return;
+  }
+
+  ventana.document.open();
+  ventana.document.write(html);
+  ventana.document.close();
+}
+
+// ==========================================
+// MÓDULO DE IMPRESIÓN DE TRANSFERENCIAS
+// ==========================================
+
+async function imprimirTransferencias() {
+  const fechaInicio = document.getElementById("dash-fecha-inicio").value;
+  const fechaFin = document.getElementById("dash-fecha-fin").value;
+  const tpvFiltro = document.getElementById("dash-tpv").value;
+
+  mostrarLoading("Generando reporte de transferencias...");
+
+  try {
+    const payload = {
+      action: "obtener_datos_transferencias",
+      payload: { fechaInicio, fechaFin, tpvFiltro },
+    };
+
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+      generarVistaImpresionTransferencias(
+        data.data,
+        fechaInicio,
+        fechaFin,
+        tpvFiltro
+      );
+    } else if (!data.success) {
+      mostrarAlerta(
+        data.data.error || "Ocurrió un error al intentar generar el reporte.",
+        "Error"
+      );
+    } else {
+      mostrarAlerta(
+        "No hay transferencias registradas en el período seleccionado.",
+        "Sin datos"
+      );
+    }
+  } catch (error) {
+    mostrarAlerta(
+      "Error de red al intentar generar el reporte.",
+      "Error de Red"
+    );
+  } finally {
+    ocultarLoading();
+  }
+}
+
+function generarVistaImpresionTransferencias(movimientos, fInicio, fFin, tpv) {
+  const textoTpv = tpv === "" || !tpv ? "Todas las Áreas / General" : tpv;
+  const textoFechaInicio = fInicio
+    ? fInicio.split("-").reverse().join("/")
+    : "N/D";
+  const textoFechaFin = fFin ? fFin.split("-").reverse().join("/") : "N/D";
+  const fechaConteo = new Date().toLocaleDateString("es-MX");
+
+  let html = `
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+      <meta charset="UTF-8">
+      <title>Reporte de Transferencias - ${textoTpv}</title>
+      <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; font-size: 11px; color: #000; }
+          h2 { text-align: center; text-transform: uppercase; margin-bottom: 20px; font-size: 16px; text-decoration: underline; }
+          .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .header-table td { border: none; padding: 5px; font-size: 12px; }
+          .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .data-table th, .data-table td { border: 1px solid #000; padding: 6px; text-align: center; }
+          .data-table th { background-color: #f2f2f2; font-weight: bold; font-size: 11px; }
+          .data-table .text-left { text-align: left; }
+          .footer-section { margin-top: 40px; width: 100%; }
+          .btn-imprimir { display: block; margin: 30px auto; padding: 12px 25px; background-color: #6f42c1; color: white; border: none; border-radius: 5px; font-size: 1rem; cursor: pointer; font-weight: bold; }
+          @media print { .btn-imprimir { display: none; } }
+      </style>
+  </head>
+  <body>
+      <h2>Reporte de Transferencias de Inventario</h2>
+      
+      <table class="header-table">
+          <tr>
+              <td width="50%"><strong>Filtro de Área/Departamento:</strong> ${textoTpv}</td>
+              <td width="50%"><strong>Fecha de Impresión:</strong> ${fechaConteo}</td>
+          </tr>
+          <tr>
+              <td><strong>Desde:</strong> ${textoFechaInicio}</td>
+              <td><strong>Hasta:</strong> ${textoFechaFin}</td>
+          </tr>
+      </table>
+
+      <table class="data-table">
+          <thead>
+              <tr>
+                  <th>Fecha y Hora</th>
+                  <th>Producto</th>
+                  <th>Origen</th>
+                  <th>Destino</th>
+                  <th>Cantidad</th>
+                  <th>Estado</th>
+                  <th>Concepto</th>
+              </tr>
+          </thead>
+          <tbody>
+  `;
+
+  if (movimientos && movimientos.length > 0) {
+    for (const mov of movimientos) {
+      const fechaObj = new Date(mov.fecha);
+      const fechaFormato =
+        fechaObj.toLocaleDateString("es-MX") +
+        " " +
+        fechaObj.toLocaleTimeString("es-MX", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+      html += `
+        <tr>
+          <td>${fechaFormato}</td>
+          <td class="text-left"><strong>${mov.producto}</strong></td>
+          <td>${mov.origen}</td>
+          <td>${mov.destino}</td>
+          <td><strong>${mov.cantidad}</strong></td>
+          <td style="color: ${
+            mov.estado === "pendiente" ? "#dc3545" : "#28a745"
+          }">${mov.estado.toUpperCase()}</td>
+          <td>${mov.concepto}</td>
+        </tr>
+      `;
+    }
+  } else {
+    html += `<tr><td colspan="7" style="padding: 20px;">No se encontraron transferencias en los filtros seleccionados.</td></tr>`;
+  }
+
+  html += `
+          </tbody>
+      </table>
+      
+      <div style="margin-top: 30px; font-size: 13px;">
+          <strong>Total de movimientos listados:</strong> ${movimientos.length}
+      </div>
+
+      <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+  </body>
+  </html>
+  `;
+
+  const ventana = window.open("", "_blank", "width=1100,height=800");
+  if (!ventana) {
+    mostrarAlerta(
+      "No se pudo abrir la ventana de impresión. Permite ventanas emergentes.",
+      "Error"
+    );
+    return;
+  }
+
+  ventana.document.open();
+  ventana.document.write(html);
+  ventana.document.close();
+}
+
+// ==========================================
+// MÓDULO DE IMPRESIÓN DE EGRESOS DE CAJA
+// ==========================================
+
+async function imprimirEgresos() {
+  const fechaInicio = document.getElementById("dash-fecha-inicio").value;
+  const fechaFin = document.getElementById("dash-fecha-fin").value;
+  const tpvFiltro = document.getElementById("dash-tpv").value;
+
+  mostrarLoading("Generando reporte de egresos...");
+
+  try {
+    const payload = {
+      action: "obtener_datos_egresos",
+      payload: { fechaInicio, fechaFin, tpvFiltro },
+    };
+
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+      generarVistaImpresionEgresos(data.data, fechaInicio, fechaFin, tpvFiltro);
+    } else if (!data.success) {
+      mostrarAlerta(
+        data.data.error || "Ocurrió un error al intentar generar el reporte.",
+        "Error"
+      );
+    } else {
+      mostrarAlerta(
+        "No hay egresos registrados en el período seleccionado.",
+        "Sin datos"
+      );
+    }
+  } catch (error) {
+    mostrarAlerta(
+      "Error de red al intentar generar el reporte.",
+      "Error de Red"
+    );
+  } finally {
+    ocultarLoading();
+  }
+}
+
+function generarVistaImpresionEgresos(egresos, fInicio, fFin, tpv) {
+  const textoTpv = tpv === "" || !tpv ? "Todas las Áreas / General" : tpv;
+  const textoFechaInicio = fInicio
+    ? fInicio.split("-").reverse().join("/")
+    : "N/D";
+  const textoFechaFin = fFin ? fFin.split("-").reverse().join("/") : "N/D";
+  const fechaConteo = new Date().toLocaleDateString("es-MX");
+
+  let html = `
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+      <meta charset="UTF-8">
+      <title>Reporte de Egresos - ${textoTpv}</title>
+      <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; font-size: 11px; color: #000; }
+          h2 { text-align: center; text-transform: uppercase; margin-bottom: 20px; font-size: 16px; text-decoration: underline; }
+          .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .header-table td { border: none; padding: 5px; font-size: 12px; }
+          .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .data-table th, .data-table td { border: 1px solid #000; padding: 6px; text-align: center; }
+          .data-table th { background-color: #f2f2f2; font-weight: bold; font-size: 11px; }
+          .data-table .text-left { text-align: left; }
+          .data-table .text-right { text-align: right; }
+          .btn-imprimir { display: block; margin: 30px auto; padding: 12px 25px; background-color: #dc3545; color: white; border: none; border-radius: 5px; font-size: 1rem; cursor: pointer; font-weight: bold; }
+          @media print { .btn-imprimir { display: none; } }
+      </style>
+  </head>
+  <body>
+      <h2>Reporte de Egresos de Efectivo</h2>
+      
+      <table class="header-table">
+          <tr>
+              <td width="50%"><strong>Filtro de Área/Instancia:</strong> ${textoTpv}</td>
+              <td width="50%"><strong>Fecha de Impresión:</strong> ${fechaConteo}</td>
+          </tr>
+          <tr>
+              <td><strong>Desde:</strong> ${textoFechaInicio}</td>
+              <td><strong>Hasta:</strong> ${textoFechaFin}</td>
+          </tr>
+      </table>
+
+      <table class="data-table">
+          <thead>
+              <tr>
+                  <th>Fecha y Hora</th>
+                  <th>Instancia TPV</th>
+                  <th>Tipo de Egreso</th>
+                  <th>Concepto / Motivo</th>
+                  <th>Monto ($)</th>
+              </tr>
+          </thead>
+          <tbody>
+  `;
+
+  let totalMonto = 0;
+
+  if (egresos && egresos.length > 0) {
+    for (const egreso of egresos) {
+      const fechaObj = new Date(egreso.fecha);
+      const fechaFormato =
+        fechaObj.toLocaleDateString("es-MX") +
+        " " +
+        fechaObj.toLocaleTimeString("es-MX", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      totalMonto += egreso.monto;
+
+      html += `
+        <tr>
+          <td>${fechaFormato}</td>
+          <td><strong>${egreso.tpv}</strong></td>
+          <td style="text-transform: capitalize;">${egreso.tipo.replace(
+            "_",
+            " "
+          )}</td>
+          <td class="text-left">${egreso.concepto}</td>
+          <td class="text-right" style="color: #dc3545; font-weight: bold;">$${egreso.monto.toFixed(
+            2
+          )}</td>
+        </tr>
+      `;
+    }
+  } else {
+    html += `<tr><td colspan="5" style="padding: 20px;">No se encontraron egresos en los filtros seleccionados.</td></tr>`;
+  }
+
+  html += `
+          </tbody>
+      </table>
+      
+      <div style="margin-top: 10px; text-align: right; font-size: 13px; font-weight: bold;">
+          Total Retirado: $${totalMonto.toFixed(2)}
+      </div>
+
+      <div style="margin-top: 30px; font-size: 13px;">
+          <strong>Total de registros (Egresos):</strong> ${egresos.length}
+      </div>
+
+      <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+  </body>
+  </html>
+  `;
+
+  const ventana = window.open("", "_blank", "width=1100,height=800");
+  if (!ventana) {
+    mostrarAlerta(
+      "No se pudo abrir la ventana de impresión. Permite ventanas emergentes.",
+      "Error"
+    );
+    return;
+  }
+
+  ventana.document.open();
+  ventana.document.write(html);
+  ventana.document.close();
+}
+
+async function imprimirVentas() {
+  const fechaInicio = document.getElementById("dash-fecha-inicio").value;
+  const fechaFin = document.getElementById("dash-fecha-fin").value;
+  const tpvFiltro = document.getElementById("dash-tpv").value;
+
+  mostrarLoading("Generando reporte de ventas...");
+
+  try {
+    const payload = {
+      action: "obtener_datos_ventas",
+      payload: { fechaInicio, fechaFin, tpvFiltro },
+    };
+
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+      generarVistaImpresionVentas(data.data, fechaInicio, fechaFin, tpvFiltro);
+    } else if (!data.success) {
+      mostrarAlerta(
+        data.data.error || "Ocurrió un error al intentar generar el reporte.",
+        "Error"
+      );
+    } else {
+      mostrarAlerta(
+        "No hay ventas registradas en el período seleccionado.",
+        "Sin datos"
+      );
+    }
+  } catch (error) {
+    mostrarAlerta(
+      "Error de red al intentar generar el reporte.",
+      "Error de Red"
+    );
+  } finally {
+    ocultarLoading();
+  }
+}
+
+function generarVistaImpresionVentas(ventas, fInicio, fFin, tpv) {
+  const textoTpv = tpv === "" || !tpv ? "Todas las Áreas / General" : tpv;
+  const textoFechaInicio = fInicio
+    ? fInicio.split("-").reverse().join("/")
+    : "N/D";
+  const textoFechaFin = fFin ? fFin.split("-").reverse().join("/") : "N/D";
+  const fechaImpresion = new Date().toLocaleDateString("es-MX");
+
+  let html = `
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+      <meta charset="UTF-8">
+      <title>Reporte de Ventas - ${textoTpv}</title>
+      <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; font-size: 11px; color: #000; }
+          h2 { text-align: center; text-transform: uppercase; margin-bottom: 20px; font-size: 16px; text-decoration: underline; }
+          .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .header-table td { border: none; padding: 5px; font-size: 12px; }
+          .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .data-table th, .data-table td { border: 1px solid #000; padding: 6px; text-align: center; }
+          .data-table th { background-color: #f2f2f2; font-weight: bold; font-size: 11px; }
+          .data-table .text-left { text-align: left; }
+          .data-table .text-right { text-align: right; }
+          .btn-imprimir { display: block; margin: 30px auto; padding: 12px 25px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 1rem; cursor: pointer; font-weight: bold; }
+          @media print { .btn-imprimir { display: none; } }
+      </style>
+  </head>
+  <body>
+      <h2>Reporte Detallado de Ventas</h2>
+      
+      <table class="header-table">
+          <tr>
+              <td width="50%"><strong>Filtro de Área/Instancia:</strong> ${textoTpv}</td>
+              <td width="50%"><strong>Fecha de Impresión:</strong> ${fechaImpresion}</td>
+          </tr>
+          <tr>
+              <td><strong>Desde:</strong> ${textoFechaInicio}</td>
+              <td><strong>Hasta:</strong> ${textoFechaFin}</td>
+          </tr>
+      </table>
+
+      <table class="data-table">
+          <thead>
+              <tr>
+                  <th>ID Venta</th>
+                  <th>Fecha</th>
+                  <th>Instancia TPV</th>
+                  <th>Producto</th>
+                  <th>Cantidad</th>
+                  <th>Método Pago</th>
+                  <th>Cliente</th>
+                  <th>Importe ($)</th>
+              </tr>
+          </thead>
+          <tbody>
+  `;
+
+  let totalImporte = 0;
+
+  if (ventas && ventas.length > 0) {
+    for (const venta of ventas) {
+      totalImporte += venta.importe;
+      const fechaMostrada =
+        typeof venta.fecha === "string" && venta.fecha.includes("/")
+          ? venta.fecha
+          : new Date(venta.fecha).toLocaleDateString("es-MX");
+
+      html += `
+        <tr>
+          <td>${venta.id_venta}</td>
+          <td>${fechaMostrada}</td>
+          <td><strong>${venta.tpv}</strong></td>
+          <td class="text-left">${venta.producto}</td>
+          <td>${venta.cantidad}</td>
+          <td style="text-transform: capitalize;">${venta.metodo_pago}</td>
+          <td>${venta.cliente}</td>
+          <td class="text-right" style="color: #28a745; font-weight: bold;">$${venta.importe.toFixed(
+            2
+          )}</td>
+        </tr>
+      `;
+    }
+  } else {
+    html += `<tr><td colspan="8" style="padding: 20px;">No se encontraron ventas en los filtros seleccionados.</td></tr>`;
+  }
+
+  html += `
+          </tbody>
+      </table>
+      
+      <div style="margin-top: 10px; text-align: right; font-size: 13px; font-weight: bold;">
+          Total Vendido (en listado): $${totalImporte.toFixed(2)}
+      </div>
+
+      <div style="margin-top: 30px; font-size: 13px;">
+          <strong>Total de registros (Ventas):</strong> ${ventas.length}
+      </div>
+
+      <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+  </body>
+  </html>
+  `;
+
+  const ventana = window.open("", "_blank", "width=1100,height=800");
+  if (!ventana) {
+    mostrarAlerta(
+      "No se pudo abrir la ventana de impresión. Permite ventanas emergentes.",
+      "Error"
+    );
     return;
   }
 
@@ -1181,140 +1845,182 @@ let incidenciasGlobales = [];
 
 // 1. Obtener los datos desde la hoja 'Incidencias'
 async function cargarIncidencias() {
-    try {
-        const payload = { action: "obtener_incidencias", payload: {} };
-        const response = await fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify(payload),
-        });
-        const data = await response.json();
+  try {
+    const payload = { action: "obtener_incidencias", payload: {} };
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
 
-        if (data.success && Array.isArray(data.data)) {
-            incidenciasGlobales = data.data;
-            renderizarIncidencias();
-            actualizarNotificacionGlobal(); // Actualiza la campanita
-        }
-    } catch (error) {
-        console.error("Error al cargar la auditoría de incidencias:", error);
+    if (data.success && Array.isArray(data.data)) {
+      incidenciasGlobales = data.data;
+      renderizarIncidencias();
+      actualizarNotificacionGlobal(); // Actualiza la campanita
     }
+  } catch (error) {
+    console.error("Error al cargar la auditoría de incidencias:", error);
+  }
 }
 
 // 2. Poblar la tabla en el Dashboard
 function renderizarIncidencias() {
-    const tbody = document.getElementById("tbody-incidencias");
-    if (!tbody) return;
+  const tbody = document.getElementById("tbody-incidencias");
+  if (!tbody) return;
 
-    tbody.innerHTML = "";
+  tbody.innerHTML = "";
 
-    if (incidenciasGlobales.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:15px; color: #666;">No hay incidencias críticas pendientes de revisión.</td></tr>';
-        return;
-    }
+  if (incidenciasGlobales.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="6" style="text-align:center; padding:15px; color: #666;">No hay incidencias críticas pendientes de revisión.</td></tr>';
+    return;
+  }
 
-    incidenciasGlobales.forEach(inc => {
-        const fechaObj = new Date(inc.fecha);
-        const fechaStr = fechaObj.toLocaleDateString() + " " + fechaObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        
-        // Estilización de alertas visuales
-        const colorRiesgo = inc.riesgo === "Alto" ? "background-color: #ffcccc; color: #cc0000; font-weight: bold;" : "background-color: #fff3cd; color: #856404;";
-        const badgeRiesgo = `<span style="padding: 4px 8px; border-radius: 4px; ${colorRiesgo}">${inc.riesgo}</span>`;
+  incidenciasGlobales.forEach((inc) => {
+    const fechaObj = new Date(inc.fecha);
+    const fechaStr =
+      fechaObj.toLocaleDateString() +
+      " " +
+      fechaObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-        tbody.innerHTML += `
+    // Estilización de alertas visuales
+    const colorRiesgo =
+      inc.riesgo === "Alto"
+        ? "background-color: #ffcccc; color: #cc0000; font-weight: bold;"
+        : "background-color: #fff3cd; color: #856404;";
+    const badgeRiesgo = `<span style="padding: 4px 8px; border-radius: 4px; ${colorRiesgo}">${inc.riesgo}</span>`;
+
+    tbody.innerHTML += `
             <tr>
                 <td style="padding: 12px; border-bottom: 1px solid #ddd;">${fechaStr}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #ddd;"><strong>${inc.tpv}</strong></td>
-                <td style="padding: 12px; border-bottom: 1px solid #ddd;">${inc.categoria} <small>(${inc.tipo})</small></td>
-                <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right; font-weight: bold;">$${parseFloat(inc.monto).toFixed(2)}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #ddd;"><strong>${
+                  inc.tpv
+                }</strong></td>
+                <td style="padding: 12px; border-bottom: 1px solid #ddd;">${
+                  inc.categoria
+                } <small>(${inc.tipo})</small></td>
+                <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: right; font-weight: bold;">$${parseFloat(
+                  inc.monto
+                ).toFixed(2)}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">${badgeRiesgo}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
-                    <button onclick="abrirModalIncidencia(${inc.idFila})" class="btn-warning btn-sm" style="background-color: var(--danger-color); color: white;">Auditar</button>
+                    <button onclick="abrirModalIncidencia(${
+                      inc.idFila
+                    })" class="btn-warning btn-sm" style="background-color: var(--danger-color); color: white;">Auditar</button>
                 </td>
             </tr>
         `;
-    });
+  });
 }
 
 // 3. Mostrar el Modal interactivo y parsear el Contexto_JSON
 function abrirModalIncidencia(idFila) {
-    const incidencia = incidenciasGlobales.find(i => i.idFila === idFila);
-    if (!incidencia) return;
+  const incidencia = incidenciasGlobales.find((i) => i.idFila === idFila);
+  if (!incidencia) return;
 
-    document.getElementById("incidencia-id-fila").value = idFila;
-    document.getElementById("incidencia-subtitulo").innerText = `Alerta en ${incidencia.tpv} - ${incidencia.categoria}`;
-    document.getElementById("incidencia-comentarios").value = "";
+  document.getElementById("incidencia-id-fila").value = idFila;
+  document.getElementById(
+    "incidencia-subtitulo"
+  ).innerText = `Alerta en ${incidencia.tpv} - ${incidencia.categoria}`;
+  document.getElementById("incidencia-comentarios").value = "";
 
-    let detallesHTML = "<strong>No hay contexto técnico adicional.</strong>";
-    
-    // Extracción dinámica de variables desde la columna G[cite: 1]
-    try {
-        const contexto = JSON.parse(incidencia.contexto_json);
-        detallesHTML = `
+  let detallesHTML = "<strong>No hay contexto técnico adicional.</strong>";
+
+  // Extracción dinámica de variables desde la columna G[cite: 1]
+  try {
+    const contexto = JSON.parse(incidencia.contexto_json);
+    detallesHTML = `
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div><strong>Fondo Inicial Carga:</strong> <br>$${(contexto.fondoInicial || 0).toFixed(2)}</div>
-                <div><strong>Ventas Teóricas:</strong> <br>$${(contexto.teorico || 0).toFixed(2)}</div>
-                <div><strong>Retiros Efectuados:</strong> <br>$${(contexto.retirosTotales || 0).toFixed(2)}</div>
-                <div style="color: var(--danger-color);"><strong>Efectivo Declarado Físico:</strong> <br>$${(contexto.declarado || 0).toFixed(2)}</div>
+                <div><strong>Fondo Inicial Carga:</strong> <br>$${(
+                  contexto.fondoInicial || 0
+                ).toFixed(2)}</div>
+                <div><strong>Ventas Teóricas:</strong> <br>$${(
+                  contexto.teorico || 0
+                ).toFixed(2)}</div>
+                <div><strong>Retiros Efectuados:</strong> <br>$${(
+                  contexto.retirosTotales || 0
+                ).toFixed(2)}</div>
+                <div style="color: var(--danger-color);"><strong>Efectivo Declarado Físico:</strong> <br>$${(
+                  contexto.declarado || 0
+                ).toFixed(2)}</div>
                 
                 <div style="grid-column: span 2; border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 5px; text-align: center;">
                     <strong>Diferencia (${incidencia.tipo}):</strong> 
-                    <span style="font-size: 1.3em; margin-left: 10px; font-weight: bold; color: ${incidencia.riesgo === 'Alto' ? '#cc0000' : '#856404'};">
+                    <span style="font-size: 1.3em; margin-left: 10px; font-weight: bold; color: ${
+                      incidencia.riesgo === "Alto" ? "#cc0000" : "#856404"
+                    };">
                         $${parseFloat(incidencia.monto).toFixed(2)}
                     </span>
                 </div>
             </div>
         `;
-    } catch (e) {
-        detallesHTML = `<p>Error al procesar el reporte original de la base de datos.</p>`;
-    }
+  } catch (e) {
+    detallesHTML = `<p>Error al procesar el reporte original de la base de datos.</p>`;
+  }
 
-    document.getElementById("incidencia-detalles").innerHTML = detallesHTML;
-    document.getElementById("modal-incidencia").style.display = "flex";
+  document.getElementById("incidencia-detalles").innerHTML = detallesHTML;
+  document.getElementById("modal-incidencia").style.display = "flex";
 }
 
 function cerrarModalIncidencia() {
-    document.getElementById("modal-incidencia").style.display = "none";
+  document.getElementById("modal-incidencia").style.display = "none";
 }
 
 // 4. Procesar el cambio de estado hacia el Backend
 async function procesarResolucion(estado) {
-    const idFila = document.getElementById("incidencia-id-fila").value;
-    const comentarios = document.getElementById("incidencia-comentarios").value.trim();
+  const idFila = document.getElementById("incidencia-id-fila").value;
+  const comentarios = document
+    .getElementById("incidencia-comentarios")
+    .value.trim();
 
-    if (!comentarios) {
-        return mostrarAlerta("La auditoría requiere una justificación o comentario obligatoriamente.", "Campo Requerido");
+  if (!comentarios) {
+    return mostrarAlerta(
+      "La auditoría requiere una justificación o comentario obligatoriamente.",
+      "Campo Requerido"
+    );
+  }
+
+  mostrarLoading(`Registrando incidencia como ${estado}...`);
+  try {
+    const payload = {
+      action: "resolver_incidencia",
+      payload: {
+        idFila: parseInt(idFila),
+        estado: estado,
+        comentarios: comentarios,
+      },
+    };
+
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+
+    if (data.success) {
+      mostrarAlerta(data.data.mensaje, "Auditoría Exitosa");
+      cerrarModalIncidencia();
+      await cargarIncidencias();
+    } else {
+      mostrarAlerta("Error en el servidor: " + data.data.error, "Error");
     }
-
-    mostrarLoading(`Registrando incidencia como ${estado}...`);
-    try {
-        const payload = {
-            action: "resolver_incidencia",
-            payload: { idFila: parseInt(idFila), estado: estado, comentarios: comentarios }
-        };
-
-        const response = await fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify(payload),
-        });
-        const data = await response.json();
-
-        if (data.success) {
-            mostrarAlerta(data.data.mensaje, "Auditoría Exitosa");
-            cerrarModalIncidencia();
-            await cargarIncidencias(); 
-        } else {
-            mostrarAlerta("Error en el servidor: " + data.data.error, "Error");
-        }
-    } catch (error) {
-        mostrarAlerta("Error de conexión al procesar la resolución.", "Fallo de Red");
-    } finally {
-        ocultarLoading();
-    }
+  } catch (error) {
+    mostrarAlerta(
+      "Error de conexión al procesar la resolución.",
+      "Fallo de Red"
+    );
+  } finally {
+    ocultarLoading();
+  }
 }
 
 // Función para consumir el nuevo endpoint de IA
 async function solicitarAnalisisIA() {
   if (!navigator.onLine) {
-    return mostrarAlerta("La inteligencia artificial requiere conexión a internet.", "Modo Offline");
+    return mostrarAlerta(
+      "La inteligencia artificial requiere conexión a internet.",
+      "Modo Offline"
+    );
   }
 
   mostrarLoading("La IA está analizando tu almacén...");
@@ -1325,14 +2031,14 @@ async function solicitarAnalisisIA() {
   try {
     const payload = {
       action: "analizar_stock_con_ia", // Apunta a la nueva función en tu GAS
-      payload: {}
+      payload: {},
     };
 
     const response = await fetch(API_URL, {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    
+
     const data = await response.json();
 
     if (data.success) {
@@ -1351,7 +2057,7 @@ async function solicitarAnalisisIA() {
 // Manejador para detectar la tecla "Enter" en el input del chat
 function manejarEnterChat(event) {
   if (event.key === "Enter") {
-      consultarChatbotNLP();
+    consultarChatbotNLP();
   }
 }
 
@@ -1359,11 +2065,18 @@ function manejarEnterChat(event) {
 async function consultarChatbotNLP() {
   const inputElement = document.getElementById("chat-nlp-input");
   const pregunta = inputElement.value.trim();
-  
-  if (!pregunta) return mostrarAlerta("Por favor, escribe una pregunta para la IA.", "Atención");
+
+  if (!pregunta)
+    return mostrarAlerta(
+      "Por favor, escribe una pregunta para la IA.",
+      "Atención"
+    );
 
   if (!navigator.onLine) {
-      return mostrarAlerta("El Chatbot IA requiere conexión a internet para funcionar.", "Modo Offline");
+    return mostrarAlerta(
+      "El Chatbot IA requiere conexión a internet para funcionar.",
+      "Modo Offline"
+    );
   }
 
   mostrarLoading("La IA está traduciendo y analizando tu pregunta...");
@@ -1372,29 +2085,66 @@ async function consultarChatbotNLP() {
   contenedorResultado.innerText = "";
 
   try {
-      const payload = {
-          action: "consultar_chatbot_ia", // Nueva acción en el enrutador
-          payload: { pregunta: pregunta }
-      };
+    const payload = {
+      action: "consultar_chatbot_ia", // Nueva acción en el enrutador
+      payload: { pregunta: pregunta },
+    };
 
-      const response = await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-      });
-      
-      const data = await response.json();
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
 
-      if (data.success) {
-          contenedorResultado.style.display = "block";
-          // Renderiza la respuesta humana
-          contenedorResultado.innerText = data.data.respuesta; 
-          inputElement.value = ""; // Limpia el input tras el éxito
-      } else {
-          mostrarAlerta("Error de procesamiento IA: " + data.data.error, "Error");
-      }
+    const data = await response.json();
+
+    if (data.success) {
+      contenedorResultado.style.display = "block";
+      // Renderiza la respuesta humana
+      contenedorResultado.innerText = data.data.respuesta;
+      inputElement.value = ""; // Limpia el input tras el éxito
+    } else {
+      mostrarAlerta("Error de procesamiento IA: " + data.data.error, "Error");
+    }
   } catch (error) {
-      mostrarAlerta("Error de red al intentar consultar al chatbot.", "Error de Red");
+    mostrarAlerta(
+      "Error de red al intentar consultar al chatbot.",
+      "Error de Red"
+    );
   } finally {
-      ocultarLoading();
+    ocultarLoading();
   }
 }
+
+
+let promptInstalacion;
+const btnInstalar = document.createElement('button');
+btnInstalar.innerText = "📱 Instalar App";
+btnInstalar.className = "btn-primary btn-sm btn-icon";
+btnInstalar.style.display = "none"; // Oculto por defecto
+
+// Agregar el botón visualmente al header del HTML
+document.querySelector('.header-actions').prepend(btnInstalar);
+
+// Escuchar el evento que dispara el navegador cuando la app es instalable
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevenir que el navegador muestre su propio prompt por defecto
+    e.preventDefault();
+    // Guardar el evento para dispararlo luego
+    promptInstalacion = e;
+    // Mostrar nuestro botón personalizado
+    btnInstalar.style.display = "inline-flex";
+});
+
+// Lógica al hacer clic en el botón
+btnInstalar.addEventListener('click', async () => {
+    if (promptInstalacion) {
+        promptInstalacion.prompt();
+        const { outcome } = await promptInstalacion.userChoice;
+        if (outcome === 'accepted') {
+            console.log('El usuario instaló la aplicación');
+            btnInstalar.style.display = "none";
+        }
+        promptInstalacion = null;
+    }
+});
+
