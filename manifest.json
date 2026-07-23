@@ -1,6 +1,6 @@
 {
-    "name": "TPV Offline - Inventario",
-    "short_name": "TPV",
+    "name": "Gestión de Mi Almacén",
+    "short_name": "Mi Almacen",
     "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#ffffff",
