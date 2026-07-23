@@ -2123,7 +2123,7 @@ btnInstalar.className = "btn-primary btn-sm btn-icon";
 btnInstalar.style.display = "none"; // Oculto por defecto
 
 // Agregar el botón visualmente al header del HTML
-document.querySelector('.header-actions').prepend(btnInstalar);
+document.querySelector('.screen active').prepend(btnInstalar);
 
 // Escuchar el evento que dispara el navegador cuando la app es instalable
 window.addEventListener('beforeinstallprompt', (e) => {
