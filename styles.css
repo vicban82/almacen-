@@ -407,3 +407,19 @@ button:hover { background-color: var(--primary-hover); }
     margin-bottom: 15px;
     border-radius: var(--border-radius); /* Opcional: le dará bordes suaves si tu logo tiene fondo cuadrado */
 }
+
+/* Variante: Retiros de Efectivo */
+.alerta-retiro {
+    border-left: 5px solid #17a2b8; /* Azul claro / Cian para el tema monetario */
+    background-color: #f0fbfc; /* Fondo muy sutil acorde al borde */
+}
+
+.alerta-retiro .alerta-titulo {
+    color: #17a2b8;
+    font-size: 1.1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
