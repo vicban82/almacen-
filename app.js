@@ -1,5 +1,6 @@
 // Asegúrate de usar la misma URL de tu API
-const API_URL = "https://script.google.com/macros/s/AKfycbwdd8aVW1WM7wyzxT-JdXjzRp7Fk4qnwVY5xr_ryxQnHKqQGFjIM-4r-dHuMbKqutJB/exec";
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbwGEpRyHBEVdx78f7QbOLyZwsfBXitG32UaGNrq-AEhNYRbetdl_4slB67AJTFssVriig/exec";
 
 // ==========================================================================
 // NUEVO: CONTROLADOR DE MODAL DE ALERTA PERSONALIZADO
@@ -64,6 +65,7 @@ async function iniciarSesion() {
     const claveGuardada = localStorage.getItem("clave_almacen_cache");
 
     if (claveGuardada && clave === claveGuardada) {
+      localStorage.setItem("sesion_activa", "true"); // <-- AGREGADO
       document.getElementById("login-screen").classList.remove("active");
       document.getElementById("almacen-screen").classList.add("active");
       await cargarCatalogo();
@@ -92,6 +94,7 @@ async function iniciarSesion() {
 
     if (data.success && data.data.instancia === "Almacen") {
       localStorage.setItem("clave_almacen_cache", clave);
+      localStorage.setItem("sesion_activa", "true"); // <-- AGREGADO
       document.getElementById("login-screen").classList.remove("active");
       document.getElementById("almacen-screen").classList.add("active");
       await cargarCatalogo();
@@ -115,6 +118,8 @@ async function iniciarSesion() {
 }
 
 function cerrarSesion() {
+  localStorage.removeItem("clave_almacen_cache"); // <-- AGREGADO
+  localStorage.removeItem("sesion_activa");        // <-- AGREGADO
   document.getElementById("almacen-screen").classList.remove("active");
   document.getElementById("login-screen").classList.add("active");
   document.getElementById("clave-input").value = "";
@@ -505,6 +510,7 @@ async function guardarEdicionProducto() {
 let notificacionesPendientes = [];
 let alertasStockPendientes = [];
 let alertasTPVPendientes = [];
+let alertasRetirosPendientes = [];
 
 async function chequearNotificacionesSilencioso() {
   try {
@@ -521,6 +527,7 @@ async function chequearNotificacionesSilencioso() {
     if (data.success) {
       notificacionesPendientes = data.data.transferencias || [];
       alertasTPVPendientes = data.data.alertasStockTPV || [];
+      alertasRetirosPendientes = data.data.retirosEfectivo || []; // Capturamos los retiros enviados por el backend
 
       alertasStockPendientes = catalogoLocal.filter((prod) => {
         const min = Number(prod.stock_minimo) || 0;
@@ -530,17 +537,18 @@ async function chequearNotificacionesSilencioso() {
 
       const btnNotificaciones = document.getElementById("btn-notificaciones");
       const badge = document.getElementById("badge-notificaciones");
-      //const totalAvisos = notificacionesPendientes.length + alertasStockPendientes.length + alertasTPVPendientes.length;
-      cargarIncidencias(); // Descarga silenciosa de descuadres
+      cargarIncidencias();
 
       window.actualizarNotificacionGlobal = function () {
         const btnNotificaciones = document.getElementById("btn-notificaciones");
         const badge = document.getElementById("badge-notificaciones");
 
+        // Sumamos los retiros de efectivo al contador del badge
         const totalAvisos =
           notificacionesPendientes.length +
           alertasStockPendientes.length +
           alertasTPVPendientes.length +
+          alertasRetirosPendientes.length +
           incidenciasGlobales.length;
 
         if (totalAvisos > 0) {
@@ -551,8 +559,8 @@ async function chequearNotificacionesSilencioso() {
           btnNotificaciones.style.display = "none";
           btnNotificaciones.classList.remove("boton-alerta");
         }
-        actualizarNotificacionGlobal(); // Ejecutar inmediatamente
       };
+      actualizarNotificacionGlobal();
     }
   } catch (error) {
     console.warn("Fallo silencioso al chequear notificaciones.");
@@ -563,16 +571,62 @@ function abrirModalNotificaciones() {
   const contenedor = document.getElementById("lista-notificaciones");
   contenedor.innerHTML = "";
 
+  // CORRECCIÓN: Ahora suma TODOS los avisos, incluyendo los retiros de efectivo pendientes
   const totalAvisos =
     notificacionesPendientes.length +
     alertasStockPendientes.length +
-    alertasTPVPendientes.length;
+    alertasTPVPendientes.length +
+    incidenciasGlobales.length +
+    alertasRetirosPendientes.length; // <-- AGREGADO
+
+ // 4. NUEVO: Renderizar Alertas de Retiros de Efectivo
+ alertasRetirosPendientes.forEach((retiro) => {
+  const div = document.createElement("div");
+  div.className = "notificacion-item alerta-retiro";
+
+  const fechaObj = new Date(retiro.fecha);
+  const fechaFormateada =
+    fechaObj.toLocaleDateString("es-MX") +
+    " " +
+    fechaObj.toLocaleTimeString("es-MX", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  div.innerHTML = `
+      <div class="alerta-titulo" style="color: #17a2b8;">
+          💵 Notificación de Retiro de Efectivo
+      </div>
+      <div class="alerta-texto"><strong>Origen (TPV):</strong> ${
+        retiro.tpv
+      }</div>
+      <div class="alerta-texto">
+          <strong>Monto Retirado:</strong> 
+          <span style="font-size: 1.2em; font-weight: bold; color: #dc3545;">
+              $${parseFloat(retiro.monto).toFixed(2)}
+          </span>
+      </div>
+      <div class="alerta-texto"><strong>Concepto / Motivo:</strong> ${
+        retiro.concepto || "Retiro general"
+      }</div>
+      <div class="alerta-texto" style="margin-top: 8px; margin-bottom: 12px; font-size: 0.8rem; color: #666;">
+          🕒 <em>Registrado el: ${fechaFormateada}</em>
+      </div>
+      
+      <!-- NUEVO: Campo de firma y botón de aprobación -->
+      <input type="password" id="firma-${retiro.idFila}" class="firma-input" placeholder="Firma digital para aceptar">
+      <button onclick="aprobarTransferencia(${retiro.idFila})" class="btn-success btn-sm" style="background-color: #17a2b8; width: 100%;">Aprobar Retiro</button>
+    `;
+  contenedor.appendChild(div);
+});
+
 
   if (totalAvisos === 0) {
     contenedor.innerHTML = "<p>No hay avisos ni transferencias pendientes.</p>";
   } else {
     // 1. Renderizar Transferencias Pendientes
     notificacionesPendientes.forEach((notif) => {
+      // ... (Mantén tu código actual de transferencias aquí) ...
       const div = document.createElement("div");
       div.className = "notificacion-item alerta-transferencia";
       div.innerHTML = `
@@ -589,12 +643,11 @@ function abrirModalNotificaciones() {
 
     // 2. Renderizar Alertas Locales del Almacén
     alertasStockPendientes.forEach((prod) => {
+      // ... (Mantén tu código actual de alertas locales aquí) ...
       const div = document.createElement("div");
       div.className = "notificacion-item alerta-critica";
-
       const minAlerta = Number(prod.stock_minimo) || 0;
       const stockActual = Number(prod.existencia) || 0;
-
       let cantidadSugerida = minAlerta * 2 - stockActual;
       if (cantidadSugerida <= 0) cantidadSugerida = minAlerta;
 
@@ -606,7 +659,6 @@ function abrirModalNotificaciones() {
             <span class="stock-badge bajo-stock">${stockActual}</span> 
             <span class="alerta-nota">(Mínimo requerido: ${minAlerta})</span>
         </div>
-        
         <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ecc; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <label style="font-size: 0.85rem; font-weight: bold; color: #555;">Enviar a: </label>
             <select id="surtido-destino-${prod.id}" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.85rem;">
@@ -622,16 +674,13 @@ function abrirModalNotificaciones() {
       contenedor.appendChild(div);
     });
 
-    // 3. NUEVO: Renderizar Alertas Críticas de los TPV
+    // 3. Renderizar Alertas Críticas de los TPV
     alertasTPVPendientes.forEach((alerta) => {
+      // ... (Mantén tu código actual de alertas TPV aquí) ...
       const div = document.createElement("div");
       div.className = "notificacion-item alerta-critica";
-
-      // Cálculo sugerido para el reabastecimiento
       let cantidadSugerida = alerta.minimo * 2 - alerta.stock;
       if (cantidadSugerida <= 0) cantidadSugerida = alerta.minimo || 5;
-
-      // Generar un ID limpio sin espacios para el DOM
       const idLimpio = alerta.producto.replace(/\s/g, "");
 
       div.innerHTML = `
@@ -642,16 +691,33 @@ function abrirModalNotificaciones() {
             <span class="stock-badge bajo-stock">${alerta.stock}</span> 
             <span class="alerta-nota">(Mínimo requerido: ${alerta.minimo})</span>
         </div>
-        
         <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ecc; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <button onclick="procesarSurtidoAutomatico('${alerta.producto}', ${cantidadSugerida}, '${idLimpio}', '${alerta.tpv}')" 
-                    class="btn-warning btn-sm" style="background-color: var(--warning-color); color: black; font-size: 0.85rem; width: 100%;">
-                ⚡ Surtir inmediatamente a ${alerta.tpv} (${cantidadSugerida} Unds)
-            </button>
+        <button onclick="procesarSurtidoAutomatico('${alerta.producto}', ${cantidadSugerida}, '${idLimpio}', '${alerta.tpv}')" 
+        class="btn-warning btn-sm" style="background-color: var(--warning-color); color: black; font-size: 0.85rem; width: 100%; white-space: normal; height: auto; padding: 10px;">
+    ⚡ Surtir inmediatamente a ${alerta.tpv} (${cantidadSugerida} Unds)
+</button>
+
         </div>
       `;
       contenedor.appendChild(div);
     });
+
+    // 4. NUEVO: Renderizar aviso de Incidencias/Auditorías
+    if (incidenciasGlobales.length > 0) {
+      const div = document.createElement("div");
+      div.className = "notificacion-item alerta-critica"; // Usa el mismo estilo rojo
+      div.innerHTML = `
+        <div class="alerta-titulo">🚨 Auditorías e Incidencias Pendientes</div>
+        <div class="alerta-texto">El sistema ha detectado <strong>${incidenciasGlobales.length}</strong> incidencia(s) (ej. descuadres de caja) que requieren revisión.</div>
+        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ecc; text-align: center;">
+            <button onclick="cerrarModalNotificaciones(); abrirDashboard();" 
+                    class="btn-primary btn-sm" style="width: 100%;">
+                📊 Ir al Dashboard para auditar
+            </button>
+        </div>
+      `;
+      contenedor.appendChild(div);
+    }
   }
 
   document.getElementById("modal-notificaciones").style.display = "flex";
@@ -2115,36 +2181,55 @@ async function consultarChatbotNLP() {
   }
 }
 
-
 let promptInstalacion;
-const btnInstalar = document.createElement('button');
+const btnInstalar = document.createElement("button");
 btnInstalar.innerText = "📱 Instalar App";
 btnInstalar.className = "btn-primary btn-sm btn-icon";
 btnInstalar.style.display = "none"; // Oculto por defecto
 
 // Agregar el botón visualmente al header del HTML
-document.querySelector('.screen active').prepend(btnInstalar);
+document.querySelector(".screen active").prepend(btnInstalar);
 
 // Escuchar el evento que dispara el navegador cuando la app es instalable
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevenir que el navegador muestre su propio prompt por defecto
-    e.preventDefault();
-    // Guardar el evento para dispararlo luego
-    promptInstalacion = e;
-    // Mostrar nuestro botón personalizado
-    btnInstalar.style.display = "inline-flex";
+window.addEventListener("beforeinstallprompt", (e) => {
+  // Prevenir que el navegador muestre su propio prompt por defecto
+  e.preventDefault();
+  // Guardar el evento para dispararlo luego
+  promptInstalacion = e;
+  // Mostrar nuestro botón personalizado
+  btnInstalar.style.display = "inline-flex";
 });
 
 // Lógica al hacer clic en el botón
-btnInstalar.addEventListener('click', async () => {
-    if (promptInstalacion) {
-        promptInstalacion.prompt();
-        const { outcome } = await promptInstalacion.userChoice;
-        if (outcome === 'accepted') {
-            console.log('El usuario instaló la aplicación');
-            btnInstalar.style.display = "none";
-        }
-        promptInstalacion = null;
+btnInstalar.addEventListener("click", async () => {
+  if (promptInstalacion) {
+    promptInstalacion.prompt();
+    const { outcome } = await promptInstalacion.userChoice;
+    if (outcome === "accepted") {
+      console.log("El usuario instaló la aplicación");
+      btnInstalar.style.display = "none";
     }
+    promptInstalacion = null;
+  }
+});
+
+
+// ==========================================
+// RESTAURACIÓN AUTOMÁTICA DE SESIÓN
+// ==========================================
+window.addEventListener('DOMContentLoaded', async () => {
+  const sesionActiva = localStorage.getItem("sesion_activa");
+  const claveGuardada = localStorage.getItem("clave_almacen_cache");
+  
+  if (sesionActiva === "true" && claveGuardada) {
+    // Entrar directamente al almacén sin esperar al servidor
+    document.getElementById("login-screen").classList.remove("active");
+    document.getElementById("almacen-screen").classList.add("active");
+    
+    // Cargar los datos del inventario y notificaciones
+    await cargarCatalogo();
+    chequearNotificacionesSilencioso();
+    setInterval(chequearNotificacionesSilencioso, 60000);
+  }
 });
 
