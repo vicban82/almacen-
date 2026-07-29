@@ -1,4 +1,4 @@
-const CACHE_NAME = 'almacen-v42';
+const CACHE_NAME = 'almacen-v43';
 const ASSETS = [
     './',
     './index.html',
