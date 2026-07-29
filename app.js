@@ -1,6 +1,6 @@
 // Asegúrate de usar la misma URL de tu API
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbwdd8aVW1WM7wyzxT-JdXjzRp7Fk4qnwVY5xr_ryxQnHKqQGFjIM-4r-dHuMbKqutJB/exec";
+  "https://script.google.com/macros/s/AKfycbwGEpRyHBEVdx78f7QbOLyZwsfBXitG32UaGNrq-AEhNYRbetdl_4slB67AJTFssVriig/exec";
 
 // ==========================================================================
 // NUEVO: CONTROLADOR DE MODAL DE ALERTA PERSONALIZADO
@@ -119,7 +119,7 @@ async function iniciarSesion() {
 
 function cerrarSesion() {
   localStorage.removeItem("clave_almacen_cache"); // <-- AGREGADO
-  localStorage.removeItem("sesion_activa");        // <-- AGREGADO
+  localStorage.removeItem("sesion_activa"); // <-- AGREGADO
   document.getElementById("almacen-screen").classList.remove("active");
   document.getElementById("login-screen").classList.add("active");
   document.getElementById("clave-input").value = "";
@@ -352,6 +352,10 @@ async function crearProducto() {
   const id = document.getElementById("prod-id").value.trim();
   const nombre = document.getElementById("prod-nombre").value.trim();
   const division = document.getElementById("prod-division").value.trim();
+
+  const descripcion = document.getElementById("prod-descripcion").value.trim(); 
+  const unidad = document.getElementById("prod-unidad").value.trim(); 
+
   const inversion = parseFloat(document.getElementById("prod-inversion").value);
   const precio = parseFloat(document.getElementById("prod-precio").value);
   const stock = parseInt(document.getElementById("prod-stock").value) || 0;
@@ -371,12 +375,16 @@ async function crearProducto() {
       id,
       nombre,
       division,
+      descripcion,
+      unidad,      
       inversion,
       precio,
       stock_inicial: stock,
       stock_minimo: stockMinimo,
     },
   };
+
+
 
   if (!navigator.onLine) {
     encolarAccionLocal(payload);
@@ -579,21 +587,21 @@ function abrirModalNotificaciones() {
     incidenciasGlobales.length +
     alertasRetirosPendientes.length; // <-- AGREGADO
 
- // 4. NUEVO: Renderizar Alertas de Retiros de Efectivo
- alertasRetirosPendientes.forEach((retiro) => {
-  const div = document.createElement("div");
-  div.className = "notificacion-item alerta-retiro";
+  // 4. NUEVO: Renderizar Alertas de Retiros de Efectivo
+  alertasRetirosPendientes.forEach((retiro) => {
+    const div = document.createElement("div");
+    div.className = "notificacion-item alerta-retiro";
 
-  const fechaObj = new Date(retiro.fecha);
-  const fechaFormateada =
-    fechaObj.toLocaleDateString("es-MX") +
-    " " +
-    fechaObj.toLocaleTimeString("es-MX", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const fechaObj = new Date(retiro.fecha);
+    const fechaFormateada =
+      fechaObj.toLocaleDateString("es-MX") +
+      " " +
+      fechaObj.toLocaleTimeString("es-MX", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 
-  div.innerHTML = `
+    div.innerHTML = `
       <div class="alerta-titulo" style="color: #17a2b8;">
           💵 Notificación de Retiro de Efectivo
       </div>
@@ -614,12 +622,15 @@ function abrirModalNotificaciones() {
       </div>
       
       <!-- NUEVO: Campo de firma y botón de aprobación -->
-      <input type="password" id="firma-${retiro.idFila}" class="firma-input" placeholder="Firma digital para aceptar">
-      <button onclick="aprobarTransferencia(${retiro.idFila})" class="btn-success btn-sm" style="background-color: #17a2b8; width: 100%;">Aprobar Retiro</button>
+      <input type="password" id="firma-${
+        retiro.idFila
+      }" class="firma-input" placeholder="Firma digital para aceptar">
+      <button onclick="aprobarTransferencia(${
+        retiro.idFila
+      })" class="btn-success btn-sm" style="background-color: #17a2b8; width: 100%;">Aprobar Retiro</button>
     `;
-  contenedor.appendChild(div);
-});
-
+    contenedor.appendChild(div);
+  });
 
   if (totalAvisos === 0) {
     contenedor.innerHTML = "<p>No hay avisos ni transferencias pendientes.</p>";
@@ -692,10 +703,7 @@ function abrirModalNotificaciones() {
             <span class="alerta-nota">(Mínimo requerido: ${alerta.minimo})</span>
         </div>
         <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ecc; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-        <button onclick="procesarSurtidoAutomatico('${alerta.producto}', ${cantidadSugerida}, '${idLimpio}', '${alerta.tpv}')" 
-        class="btn-warning btn-sm" style="background-color: var(--warning-color); color: black; font-size: 0.85rem; width: 100%; white-space: normal; height: auto; padding: 10px;">
-    ⚡ Surtir inmediatamente a ${alerta.tpv} (${cantidadSugerida} Unds)
-</button>
+
 
         </div>
       `;
@@ -2213,23 +2221,21 @@ btnInstalar.addEventListener("click", async () => {
   }
 });
 
-
 // ==========================================
 // RESTAURACIÓN AUTOMÁTICA DE SESIÓN
 // ==========================================
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener("DOMContentLoaded", async () => {
   const sesionActiva = localStorage.getItem("sesion_activa");
   const claveGuardada = localStorage.getItem("clave_almacen_cache");
-  
+
   if (sesionActiva === "true" && claveGuardada) {
     // Entrar directamente al almacén sin esperar al servidor
     document.getElementById("login-screen").classList.remove("active");
     document.getElementById("almacen-screen").classList.add("active");
-    
+
     // Cargar los datos del inventario y notificaciones
     await cargarCatalogo();
     chequearNotificacionesSilencioso();
     setInterval(chequearNotificacionesSilencioso, 60000);
   }
 });
-

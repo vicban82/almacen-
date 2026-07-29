@@ -132,7 +132,7 @@
 
                     <div class="form-group">
                         <input type="text" id="chat-nlp-input"
-                            placeholder='Ej: "¿Cuántas Coca Colas quedan en TPV_1 y a qué precio?"'
+                            placeholder='Ej: "¿Cuántas bolsas de arroz quedan en TPV_1 y a qué precio?"'
                             onkeypress="manejarEnterChat(event)" style="border-color: #e0d4f5;">
                     </div>
 
@@ -160,12 +160,99 @@
                     </div>
                     <div class="form-group">
                         <label>Nombre:</label>
-                        <input type="text" id="prod-nombre" placeholder="Ej. Coca Cola 600ml">
+                        <input type="text" id="prod-nombre" placeholder="Ej. Arroz">
                     </div>
                     <div class="form-group">
-                        <label>División/Categoría:</label>
-                        <input type="text" id="prod-division" placeholder="Ej. Bebidas">
+                        <label>Descripción:</label>
+                        <input type="text" id="prod-descripcion" placeholder="Ej. Bebida azucarada">
                     </div>
+                    <div class="form-group">
+                        <label>Medida:</label>
+                        <select id="prod-unidad">
+                            <option value="" disabled selected>Seleccione una medida...</option>
+                            <option value="kg">Kilogramo</option>
+                            <option value="g">Gramo</option>
+                            <option value="qq">Quintal</option>
+                            <option value="t">Tonelada</option>
+                            <option value="lb">Libra</option>
+                            <option value="oz">Onza</option>
+                            <option value="L">Litro</option>
+                            <option value="gal">Galón</option>
+                            <option value="mL">Mililitro</option>
+                            <option value="fl oz">Onza líquida</option>
+                            <option value="m³">Metro cúbico</option>
+                            <option value="m">Metro</option>
+                            <option value="yd">Yarda</option>
+                            <option value="cm">Centímetro</option>
+                            <option value="in">Pulgada</option>
+                            <option value="u">Unidad</option>
+                            <option value="pr">Par</option>
+                            <option value="doc">Docena</option>
+                            <option value="pqt">Paquete</option>
+                            <option value="caj">Caja</option>
+                            <option value="bto">Bulto</option>
+                            <option value="m²">Metro cuadrado</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>División/Categoría:</label>
+                        <!-- Se agrega el atributo list vinculado al id del datalist -->
+                        <input type="text" id="prod-division" list="lista-categorias" placeholder="Busca o selecciona una categoría...">
+                        
+                        <datalist id="lista-categorias">
+                            <option value="Alimentos y Bebidas"></option>
+                            <option value="Panadería y Pastelería"></option>
+                            <option value="Carnes y Embutidos"></option>
+                            <option value="Pescados y Mariscos"></option>
+                            <option value="Frutas y Verduras"></option>
+                            <option value="Granos y Cereales"></option>
+                            <option value="Lácteos y Huevos"></option>
+                            <option value="Bebidas Alcohólicas"></option>
+                            <option value="Bebidas No Alcohólicas"></option>
+                            <option value="Café y Té"></option>
+                            <option value="Dulces y Confituras"></option>
+                            <option value="Snacks y Botanas"></option>
+                            <option value="Comida Preparada"></option>
+                            <option value="Ropa y Textiles"></option>
+                            <option value="Calzado y Accesorios"></option>
+                            <option value="Hogar y Decoración"></option>
+                            <option value="Muebles y Enseres"></option>
+                            <option value="Electrónica y Audio"></option>
+                            <option value="Electrodomésticos Línea Blanca"></option>
+                            <option value="Computadoras y Accesorios"></option>
+                            <option value="Teléfonos y Comunicaciones"></option>
+                            <option value="Ferretería y Herramientas"></option>
+                            <option value="Materiales de Construcción"></option>
+                            <option value="Eléctricos y Plomería"></option>
+                            <option value="Pintura y Acabados"></option>
+                            <option value="Cuidado Personal y Belleza"></option>
+                            <option value="Perfumería y Cosmética"></option>
+                            <option value="Productos Farmacéuticos"></option>
+                            <option value="Artículos Médicos"></option>
+                            <option value="Limpieza y Aseo"></option>
+                            <option value="Jardinería y Agricultura"></option>
+                            <option value="Automotriz y Repuestos"></option>
+                            <option value="Motos y Bicicletas"></option>
+                            <option value="Deportes y Fitness"></option>
+                            <option value="Camping y Aventura"></option>
+                            <option value="Juguetes y Juegos"></option>
+                            <option value="Papelería y Oficina"></option>
+                            <option value="Libros y Revistas"></option>
+                            <option value="Música y Películas"></option>
+                            <option value="Mascotas y Animales"></option>
+                            <option value="Artesanías y Souvenirs"></option>
+                            <option value="Joyería y Relojería"></option>
+                            <option value="Maletas y Equipaje"></option>
+                            <option value="Bebés y Niños"></option>
+                            <option value="Salud y Bienestar"></option>
+                            <option value="Suplementos Nutricionales"></option>
+                            <option value="Hogar Inteligente"></option>
+                            <option value="Repuestos y Accesorios Varios"></option>
+                            <option value="Combustibles y Lubricantes"></option>
+                        </datalist>
+                    </div>
+                    
                     <div class="form-group">
                         <label>Costo (Inversión):</label>
                         <input type="number" id="prod-inversion" placeholder="0.00" step="0.01">
