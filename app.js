@@ -2,7 +2,81 @@
 const API_URL =
   "https://script.google.com/macros/s/AKfycbwdd8aVW1WM7wyzxT-JdXjzRp7Fk4qnwVY5xr_ryxQnHKqQGFjIM-4r-dHuMbKqutJB/exec";
 
+// Inicializar la cola de acciones offline
+let offlineQueue = JSON.parse(localStorage.getItem("cola_acciones_tpv")) || [];
+
+
 // ==========================================================================
+// NUEVO: VERIFICADOR DE CONEXIÓN REAL A INTERNET
+// ==========================================================================
+let conexionReal = navigator.onLine; // Estado inicial basado en la tarjeta de red
+
+/**
+ * Realiza un ping ligero al servidor para confirmar conectividad real.
+ */
+async function chequearInternet() {
+  // Si el navegador dice que estamos desconectados del router, no hay necesidad de hacer fetch
+  if (!navigator.onLine) {
+    actualizarEstadoConexion(false);
+    return false;
+  }
+
+  try {
+    const controller = new AbortController();
+    // Timeout de 4 segundos para evitar que la UI se quede esperando indefinidamente
+    const timeoutId = setTimeout(() => controller.abort(), 4000); 
+
+    // Hacemos una petición GET ligera. "no-cors" evita problemas de políticas, 
+    // y "no-store" asegura que el navegador no devuelva una respuesta guardada.
+    await fetch(API_URL, { 
+      method: "GET", 
+      mode: "no-cors", 
+      cache: "no-store",
+      signal: controller.signal 
+    });
+    
+    clearTimeout(timeoutId);
+    actualizarEstadoConexion(true);
+    return true;
+  } catch (error) {
+    // Si la petición falla (ej. timeout, sin internet real, o portal cautivo), estamos offline
+    actualizarEstadoConexion(false);
+    return false;
+  }
+}
+
+
+/**
+ * Actualiza la UI centralizando la lógica que antes estaba dispersa.
+ */
+function actualizarEstadoConexion(estaOnline) {
+  // Solo sincroniza la cola si pasamos de offline a online
+  const recuperarConexion = !conexionReal && estaOnline; 
+  conexionReal = estaOnline;
+  
+  const badgeOffline = document.getElementById("offline-badge");
+  
+  if (estaOnline) {
+    badgeOffline.style.display = "none";
+    if (recuperarConexion) sincronizarColaOffline();
+  } else {
+    badgeOffline.style.display = "block";
+  }
+}
+
+// Reemplazar los Listeners originales (Puedes borrar los anteriores que tenías en app.js)
+window.addEventListener("online", chequearInternet);
+window.addEventListener("offline", () => actualizarEstadoConexion(false));
+
+// Ejecutar chequeo inicial al cargar
+chequearInternet();
+
+// Monitoreo silencioso: Revisa la conexión real en segundo plano cada 15 segundos
+setInterval(chequearInternet, 15000);
+
+
+
+  // ==========================================================================
 // NUEVO: CONTROLADOR DE MODAL DE ALERTA PERSONALIZADO
 // ==========================================================================
 let resolverAlerta;
@@ -25,23 +99,7 @@ function cerrarModalAlerta() {
   }
 }
 
-// ==========================================
-// MÓDULO OFFLINE Y SINCRONIZACIÓN
-// ==========================================
-let offlineQueue = JSON.parse(localStorage.getItem("cola_acciones_tpv")) || [];
 
-window.addEventListener("online", () => {
-  document.getElementById("offline-badge").style.display = "none";
-  sincronizarColaOffline();
-});
-
-window.addEventListener("offline", () => {
-  document.getElementById("offline-badge").style.display = "block";
-});
-
-if (!navigator.onLine) {
-  document.getElementById("offline-badge").style.display = "block";
-}
 
 let catalogoLocal = [];
 let instanciaActual = "Almacen";
@@ -61,7 +119,7 @@ async function iniciarSesion() {
 
   mostrarLoading("Verificando acceso...");
 
-  if (!navigator.onLine) {
+  if (!conexionReal) {
     const claveGuardada = localStorage.getItem("clave_almacen_cache");
 
     if (claveGuardada && clave === claveGuardada) {
@@ -131,7 +189,7 @@ function cerrarSesion() {
 async function cargarCatalogo() {
   mostrarLoading("Cargando inventario del almacén...");
   try {
-    if (!navigator.onLine) throw new Error("Offline");
+    if (!conexionReal) throw new Error("Offline");
 
     const payload = {
       action: "obtener_catalogo",
@@ -251,7 +309,7 @@ async function ejecutarTransferencia() {
     payload: { origen: instanciaActual, destino, producto, cantidad },
   };
 
-  if (!navigator.onLine) {
+  if (!conexionReal) {
     encolarAccionLocal(payload);
     const prodIndex = catalogoLocal.findIndex((p) => p.nombre === producto);
     if (prodIndex > -1) catalogoLocal[prodIndex].existencia -= cantidad;
@@ -306,7 +364,7 @@ async function ejecutarMerma() {
     payload: { instancia: instanciaActual, producto, cantidad, motivo },
   };
 
-  if (!navigator.onLine) {
+  if (!conexionReal) {
     encolarAccionLocal(payload);
     const prodIndex = catalogoLocal.findIndex((p) => p.nombre === producto);
     if (prodIndex > -1) catalogoLocal[prodIndex].existencia -= cantidad;
@@ -386,7 +444,7 @@ async function crearProducto() {
 
 
 
-  if (!navigator.onLine) {
+  if (!conexionReal) {
     encolarAccionLocal(payload);
 
     const nuevoProducto = {
@@ -1171,7 +1229,7 @@ async function ejecutarEntradaProveedor() {
     payload: { producto, cantidad, motivo },
   };
 
-  if (!navigator.onLine) {
+  if (!conexionReal) {
     encolarAccionLocal(payload);
 
     const prodIndex = catalogoLocal.findIndex((p) => p.nombre === producto);
@@ -2090,7 +2148,7 @@ async function procesarResolucion(estado) {
 
 // Función para consumir el nuevo endpoint de IA
 async function solicitarAnalisisIA() {
-  if (!navigator.onLine) {
+  if (!conexionReal) {
     return mostrarAlerta(
       "La inteligencia artificial requiere conexión a internet.",
       "Modo Offline"
@@ -2146,7 +2204,7 @@ async function consultarChatbotNLP() {
       "Atención"
     );
 
-  if (!navigator.onLine) {
+  if (!conexionReal) {
     return mostrarAlerta(
       "El Chatbot IA requiere conexión a internet para funcionar.",
       "Modo Offline"
@@ -2196,7 +2254,7 @@ btnInstalar.className = "btn-primary btn-sm btn-icon";
 btnInstalar.style.display = "none"; // Oculto por defecto
 
 // Agregar el botón visualmente al header del HTML
-document.querySelector(".screen active").prepend(btnInstalar);
+document.querySelector(".screen.active").prepend(btnInstalar);
 
 // Escuchar el evento que dispara el navegador cuando la app es instalable
 window.addEventListener("beforeinstallprompt", (e) => {
