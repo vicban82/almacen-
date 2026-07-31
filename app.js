@@ -2282,7 +2282,18 @@ btnInstalar.addEventListener("click", async () => {
 // ==========================================
 // RESTAURACIÓN AUTOMÁTICA DE SESIÓN
 // ==========================================
+// ==========================================
+// RESTAURACIÓN AUTOMÁTICA DE SESIÓN Y AVISO DEMO
+// ==========================================
 window.addEventListener("DOMContentLoaded", async () => {
+  
+  // 1. Mostrar la advertencia de versión Demo obligatoria inicial
+  await mostrarAlerta(
+    "Esta es una versión demo de la aplicación que están probando al mismo tiempo varios posibles clientes. Por lo tanto, es posible que se produzcan determinados errores de cálculo debido a que la aplicación no está configurada para un cliente final específico. Si después de una evaluación inicial usted decide probar la aplicación póngase en contacto con los desarrolladores para la implementación de una instancia dedicada solamente a la gestión de su negocio por un periodo gratis de 30 días.",
+    "⚠️ Aviso de Versión Demo"
+  );
+
+  // 2. Continuar con el flujo normal de restauración de sesión
   const sesionActiva = localStorage.getItem("sesion_activa");
   const claveGuardada = localStorage.getItem("clave_almacen_cache");
 
