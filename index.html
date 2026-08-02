@@ -22,20 +22,23 @@
         <h2>Acceso Almacén Central</h2>
         <!-- NUEVO: Contenedor para la configuración de la URL de la API -->
         <div id="api-config-container" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-            <p class="subtitle" style="margin-top: 10px; max-width: 300px; text-align: center;">Clave de acceso al entorno de trabajo en la nube.</p>
+            <p class="subtitle" style="margin-top: 10px; max-width: 300px; text-align: center;">Clave de acceso al
+                entorno de trabajo en la nube.</p>
             <input type="text" id="api-url-input" placeholder="Ingrese la clave aqui" style="width: 300px;">
             <button onclick="guardarUrlApi()" class="btn-success">Guardar y Continuar</button>
         </div>
 
         <!-- MODIFICADO: Controles de sesión existentes encapsulados -->
-        <div id="login-controls-container" style="display: none; flex-direction: column; align-items: center; width: 100%;">
+        <div id="login-controls-container"
+            style="display: none; flex-direction: column; align-items: center; width: 100%;">
             <input type="password" id="clave-input" placeholder="Clave de Administrador">
             <button onclick="iniciarSesion()">Entrar</button>
 
             <!-- Botón para restablecer la API -->
-                        <button onclick="restablecerUrlApi()" style="background: none; border: none; color: #6c757d; font-size: 0.85rem; margin-top: 25px; text-decoration: underline; padding: 5px; box-shadow: none;">
-                            ⚙️ Cambiar clave de entorno
-                        </button>
+            <button onclick="restablecerUrlApi()"
+                style="background: none; border: none; color: #6c757d; font-size: 0.85rem; margin-top: 25px; text-decoration: underline; padding: 5px; box-shadow: none;">
+                ⚙️ Cambiar clave de entorno
+            </button>
         </div>
 
     </div>
@@ -55,7 +58,6 @@
                 <button onclick="cerrarSesion()" class="btn-secondary btn-sm btn-icon" title="Cerrar Sesión">🚪</button>
             </div>
         </header>
-
 
         <main class="almacen-layout">
             <section class="panel-izquierdo">
@@ -214,8 +216,9 @@
                     <div class="form-group">
                         <label>División/Categoría:</label>
                         <!-- Se agrega el atributo list vinculado al id del datalist -->
-                        <input type="text" id="prod-division" list="lista-categorias" placeholder="Busca o selecciona una categoría...">
-                        
+                        <input type="text" id="prod-division" list="lista-categorias"
+                            placeholder="Busca o selecciona una categoría...">
+
                         <datalist id="lista-categorias">
                             <option value="Alimentos y Bebidas"></option>
                             <option value="Panadería y Pastelería"></option>
@@ -268,15 +271,17 @@
                             <option value="Combustibles y Lubricantes"></option>
                         </datalist>
                     </div>
-                    
+
                     <div class="form-group">
                         <label>Costo (Inversión):</label>
-                        <input type="text" id="prod-inversion" class="input-importe" placeholder="0.00" oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
-                    </div>                                                             
+                        <input type="text" id="prod-inversion" class="input-importe" placeholder="0.00"
+                            oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
+                    </div>
                     <div class="form-group">
                         <label>Precio de Venta:</label>
-                        <input type="text" id="prod-precio" class="input-importe" placeholder="0.00" oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
-                    </div>                                                           
+                        <input type="text" id="prod-precio" class="input-importe" placeholder="0.00"
+                            oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
+                    </div>
                     <div class="form-group">
                         <label>Stock Inicial (En Almacén):</label>
                         <input type="number" id="prod-stock" placeholder="0" min="0">
@@ -292,6 +297,18 @@
                 </div>
             </section>
 
+            <!-- ACCIÓN CRÍTICA: LIMPIAR BASE DE DATOS -->
+            <div class="card mt-20" style="border-top: 4px solid var(--danger-color); grid-column: 1 / -1;">
+                <h4 style="color: var(--danger-color);">⚠️ Acción Crítica: Depuración de Sistema</h4>
+                <p class="subtitle">¿Es consciente que está a punto de limpiar todos los registros de la base de datos?.</p>
+                <p><strong>Esta acción es irreversible.</strong></p>
+                <button onclick="iniciarLimpiezaBD()" class="btn-warning"
+                    style="background-color: var(--danger-color); color: white; width: 100%; margin-top: 10px;">
+                    Limpiar Base de Datos
+                </button>
+            </div>
+
+
         </main>
     </div>
 
@@ -304,20 +321,31 @@
 
             <div class="form-group">
                 <label>Nuevo Costo (Inversión):</label>
-                <input type="text" id="edit-prod-inversion" class="input-importe" placeholder="0.00" oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
-            </div>                                                
+                <input type="text" id="edit-prod-inversion" class="input-importe" placeholder="0.00"
+                    oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
+            </div>
             <div class="form-group">
                 <label>Nuevo Precio de Venta:</label>
-                <input type="text" id="edit-prod-precio" class="input-importe" placeholder="0.00" oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
-            </div>            
+                <input type="text" id="edit-prod-precio" class="input-importe" placeholder="0.00"
+                    oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
+            </div>
             <!-- NUEVO CAMPO: Edición de Stock Mínimo -->
             <div class="form-group">
                 <label>Nuevo Stock Mínimo (Alerta):</label>
                 <input type="number" id="edit-prod-stock-minimo" min="0">
             </div>
 
+            <!-- NUEVO CAMPO: Edición de Stock Mínimo -->
+            <div class="form-group">
+                <label>Nuevo Stock Mínimo (Alerta):</label>
+                <input type="number" id="edit-prod-stock-minimo" min="0">
+            </div>
 
-            <button onclick="guardarEdicionProducto()" class="btn-success">Guardar Cambios</button>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="ejecutarEliminacionProducto()" class="btn-warning"
+                    style="background-color: var(--danger-color); color: white;">🗑️ Eliminar Producto</button>
+                <button onclick="guardarEdicionProducto()" class="btn-success">Guardar Cambios</button>
+            </div>
         </div>
     </div>
 

@@ -2415,3 +2415,103 @@ function formatearMonedaEnVivo(input) {
   let cursorOffset = newLength - originalLength;
   input.setSelectionRange(start + cursorOffset, start + cursorOffset);
 }
+
+// ==========================================
+// MÓDULO DE ELIMINACIÓN DE PRODUCTO
+// ==========================================
+async function ejecutarEliminacionProducto() {
+  const idProducto = document.getElementById("edit-prod-id").value;
+  const nombreProducto = document.getElementById("edit-prod-nombre").innerText;
+
+  if (!idProducto) return mostrarAlerta("No se pudo identificar el producto.", "Error");
+  if (!conexionReal) {
+      return mostrarAlerta("La eliminación en cascada de la base de datos requiere conexión a internet.", "Modo Offline");
+  }
+
+  // Solicitamos confirmación explícita del usuario
+  const confirmado = await mostrarConfirmacion(
+      "🗑️ Eliminar Producto Definitivamente",
+      `Estás a punto de eliminar "${nombreProducto}". Esto borrará EN CASCADA su registro del catálogo, el historial de transferencias y todas sus ventas registradas. Esta acción no se puede deshacer. ¿Deseas continuar?`
+  );
+
+  if (!confirmado) return;
+
+  mostrarLoading("Eliminando producto y depurando registros asociados...");
+
+  try {
+      const payload = {
+          action: "eliminar_producto",
+          payload: { id_producto: idProducto }
+      };
+
+      const response = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+      });
+      
+      const data = await response.json();
+
+      if (data.success) {
+          mostrarAlerta(data.data.mensaje, "Operación Exitosa");
+          cerrarModalEdicion();
+          
+          // Eliminamos el producto del caché local visual
+          catalogoLocal = catalogoLocal.filter(p => p.id !== idProducto);
+          localStorage.setItem("catalogo_cache", JSON.stringify(catalogoLocal));
+          
+          // Refrescamos la vista
+          renderizarCatalogo();
+          actualizarSelectTransferencias();
+      } else {
+          mostrarAlerta("Error al eliminar: " + data.data.error, "Error del Servidor");
+      }
+  } catch (error) {
+      mostrarAlerta("Error de conexión al procesar la eliminación. Verifique su internet.", "Error de Red");
+  } finally {
+      ocultarLoading();
+  }
+}
+
+
+// ==========================================
+// MÓDULO DE LIMPIEZA DE BASE DE DATOS
+// ==========================================
+async function iniciarLimpiezaBD() {
+  if (!conexionReal) {
+      return mostrarAlerta("La limpieza de la base de datos no se puede ejecutar en modo offline. Requiere conexión a internet.", "Modo Offline");
+  }
+
+  const confirmado = await mostrarConfirmacion(
+      "⚠️ PELIGRO: ACCIÓN CRÍTICA",
+      "¿Está absolutamente seguro de que desea ELIMINAR TODOS LOS REGISTROS de la base de datos? Se borrarán catálogos, movimientos, cierres e incidencias.\n\nESTA ACCIÓN NO SE PUEDE DESHACER."
+  );
+
+  if (confirmado) {
+      ejecutarLimpiezaBD();
+  }
+}
+
+async function ejecutarLimpiezaBD() {
+  mostrarLoading("Depurando base de datos. Por favor, no cierre esta ventana...");
+  
+  try {
+      const payload = { action: "limpiar_base_datos", payload: {} };
+      const response = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+
+      if (data.success) {
+          mostrarAlerta(data.data.mensaje, "Limpieza Exitosa");
+          // Cerramos sesión para forzar la recarga limpia de todo el sistema
+          cerrarSesion();
+      } else {
+          mostrarAlerta("Error en el servidor: " + data.data.error, "Error Crítico");
+      }
+  } catch (error) {
+      mostrarAlerta("Error de red crítico. Verifique la conexión con el servidor.", "Error de Red");
+  } finally {
+      ocultarLoading();
+  }
+}
