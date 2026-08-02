@@ -423,3 +423,9 @@ button:hover { background-color: var(--primary-hover); }
     gap: 8px;
     margin-bottom: 10px;
 }
+
+/* Añadir al final de styles.css */
+.input-importe {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums; /* Asegura que los números ocupen el mismo ancho */
+}

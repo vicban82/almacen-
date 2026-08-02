@@ -1,9 +1,57 @@
-// Asegúrate de usar la misma URL de tu API
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbwdd8aVW1WM7wyzxT-JdXjzRp7Fk4qnwVY5xr_ryxQnHKqQGFjIM-4r-dHuMbKqutJB/exec";
+// Variable global dinámica para la URL de la API
+let API_URL = localStorage.getItem("api_url_almacen") || "";
 
 // Inicializar la cola de acciones offline
 let offlineQueue = JSON.parse(localStorage.getItem("cola_acciones_tpv")) || [];
+
+// ==========================================================================
+// GESTIÓN DINÁMICA DE LA URL DE LA API
+// ==========================================================================
+
+function inicializarUIConfiguracion() {
+  const containerConfig = document.getElementById("api-config-container");
+  const containerLogin = document.getElementById("login-controls-container");
+
+  if (API_URL) {
+      // Si hay URL, ocultar configuración y mostrar login
+      containerConfig.style.display = "none";
+      containerLogin.style.display = "flex";
+  } else {
+      // Si no hay URL, mostrar configuración y ocultar login
+      containerConfig.style.display = "flex";
+      containerLogin.style.display = "none";
+  }
+}
+
+function guardarUrlApi() {
+  const urlInput = document.getElementById("api-url-input").value.trim();
+  
+  if (!urlInput || !urlInput.startsWith("https://script.google.com/")) {
+      return mostrarAlerta("Por favor, ingrese una URL válida de Google Apps Script.", "Atención");
+  }
+
+  API_URL = urlInput;
+  localStorage.setItem("api_url_almacen", API_URL);
+  inicializarUIConfiguracion();
+  chequearInternet(); // Chequeo inicial ahora que tenemos URL
+  mostrarAlerta("URL de conexión configurada con éxito.", "Configuración Guardada");
+}
+
+function restablecerUrlApi() {
+  mostrarConfirmacion(
+      "¿Cambiar URL de conexión?",
+      "Esto borrará la configuración actual y cerrará cualquier sesión activa. ¿Desea continuar?"
+  ).then((confirmado) => {
+      if (confirmado) {
+          localStorage.removeItem("api_url_almacen");
+          API_URL = "";
+          document.getElementById("api-url-input").value = "";
+          cerrarSesion(); // Cerramos sesión por seguridad
+          inicializarUIConfiguracion();
+      }
+  });
+}
+
 
 
 // ==========================================================================
@@ -15,6 +63,9 @@ let conexionReal = navigator.onLine; // Estado inicial basado en la tarjeta de r
  * Realiza un ping ligero al servidor para confirmar conectividad real.
  */
 async function chequearInternet() {
+  // Evitar chequeo si no hemos configurado la API aún
+  if (!API_URL) return false; 
+
   // Si el navegador dice que estamos desconectados del router, no hay necesidad de hacer fetch
   if (!navigator.onLine) {
     actualizarEstadoConexion(false);
@@ -414,8 +465,8 @@ async function crearProducto() {
   const descripcion = document.getElementById("prod-descripcion").value.trim(); 
   const unidad = document.getElementById("prod-unidad").value.trim(); 
 
-  const inversion = parseFloat(document.getElementById("prod-inversion").value);
-  const precio = parseFloat(document.getElementById("prod-precio").value);
+  const inversion = parseFloat(document.getElementById("prod-inversion").value.replace(/,/g, ''));
+  const precio = parseFloat(document.getElementById("prod-precio").value.replace(/,/g, ''));
   const stock = parseInt(document.getElementById("prod-stock").value) || 0;
   const stockMinimo =
     parseInt(document.getElementById("prod-stock-minimo").value) || 0;
@@ -511,8 +562,8 @@ function abrirModalEdicion(id) {
 
   document.getElementById("edit-prod-id").value = prod.id;
   document.getElementById("edit-prod-nombre").innerText = prod.nombre;
-  document.getElementById("edit-prod-inversion").value = prod.inversion;
-  document.getElementById("edit-prod-precio").value = prod.precio;
+  document.getElementById("edit-prod-inversion").value = Number(prod.inversion).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById("edit-prod-precio").value = Number(prod.precio).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   document.getElementById("edit-prod-stock-minimo").value =
     prod.stock_minimo || 0;
 
@@ -525,10 +576,8 @@ function cerrarModalEdicion() {
 
 async function guardarEdicionProducto() {
   const id = document.getElementById("edit-prod-id").value;
-  const inversion = parseFloat(
-    document.getElementById("edit-prod-inversion").value
-  );
-  const precio = parseFloat(document.getElementById("edit-prod-precio").value);
+  const inversion = parseFloat(document.getElementById("edit-prod-inversion").value.replace(/,/g, ''));
+  const precio = parseFloat(document.getElementById("edit-prod-precio").value.replace(/,/g, ''));
   const stockMinimo =
     parseInt(document.getElementById("edit-prod-stock-minimo").value) || 0;
 
@@ -2288,23 +2337,81 @@ btnInstalar.addEventListener("click", async () => {
 window.addEventListener("DOMContentLoaded", async () => {
   
   // 1. Mostrar la advertencia de versión Demo obligatoria inicial
-  await mostrarAlerta(
+  /* await mostrarAlerta(
     "Esta es una versión demo de la aplicación que están probando al mismo tiempo varios posibles clientes. Por lo tanto, es posible que se produzcan determinados errores de cálculo debido a que la aplicación no está configurada para un cliente final específico. Si después de una evaluación inicial usted decide probar la aplicación póngase en contacto con los desarrolladores para la implementación de una instancia dedicada solamente a la gestión de su negocio por un periodo gratis de 30 días.",
     "⚠️ Aviso de Versión Demo"
-  );
+  ); */
 
-  // 2. Continuar con el flujo normal de restauración de sesión
-  const sesionActiva = localStorage.getItem("sesion_activa");
-  const claveGuardada = localStorage.getItem("clave_almacen_cache");
+  // 2. Inicializar la interfaz correcta (Configuración de API o Login)
+  inicializarUIConfiguracion();
 
-  if (sesionActiva === "true" && claveGuardada) {
-    // Entrar directamente al almacén sin esperar al servidor
-    document.getElementById("login-screen").classList.remove("active");
-    document.getElementById("almacen-screen").classList.add("active");
+  // 3. Continuar con el flujo normal de restauración de sesión SOLO si hay API_URL
+  if (API_URL) {
+      const sesionActiva = localStorage.getItem("sesion_activa");
+      const claveGuardada = localStorage.getItem("clave_almacen_cache");
 
-    // Cargar los datos del inventario y notificaciones
-    await cargarCatalogo();
-    chequearNotificacionesSilencioso();
-    setInterval(chequearNotificacionesSilencioso, 60000);
+      if (sesionActiva === "true" && claveGuardada) {
+        // Entrar directamente al almacén sin esperar al servidor
+        document.getElementById("login-screen").classList.remove("active");
+        document.getElementById("almacen-screen").classList.add("active");
+
+        // Cargar los datos del inventario y notificaciones
+        await cargarCatalogo();
+        chequearNotificacionesSilencioso();
+        setInterval(chequearNotificacionesSilencioso, 60000);
+      }
   }
 });
+
+// Añadir en app.js (puede ser al inicio o al final del archivo)
+function formatearImporteContable(input) {
+  // 1. Quitamos cualquier coma que el usuario haya escrito manualmente para evitar errores de parseo
+  let valorLimpio = input.value.replace(/,/g, '');
+  let valor = parseFloat(valorLimpio);
+  
+  if (!isNaN(valor)) {
+      // 2. Formateamos el número con separadores de miles y 2 decimales fijos
+      input.value = valor.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+      });
+  } else {
+      input.value = "";
+  }
+}
+
+// ==========================================
+// FORMATEO EN VIVO DE IMPORTES MONETARIOS
+// ==========================================
+function formatearMonedaEnVivo(input) {
+  // Guardar la posición del cursor original
+  let start = input.selectionStart;
+  let originalLength = input.value.length;
+
+  // Limpiar el valor dejando únicamente números y el punto decimal
+  let valorLimpio = input.value.replace(/[^0-9.]/g, '');
+  
+  // Separar enteros de decimales y evitar más de un punto
+  let partes = valorLimpio.split('.');
+  let enteros = partes[0];
+  let decimales = partes.length > 1 ? '.' + partes[1].substring(0, 2) : ''; // Máximo 2 decimales
+
+  // Aplicar comas a los miles
+  if (enteros) {
+      // Eliminar ceros a la izquierda innecesarios (ej. "01" -> "1")
+      if (enteros.length > 1 && enteros.startsWith('0')) {
+          enteros = enteros.replace(/^0+/, '');
+          if (enteros === '') enteros = '0';
+      }
+      // Expresión regular para separar por miles
+      enteros = enteros.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  // Actualizar el input con el formato
+  input.value = enteros + decimales;
+
+  // Ajustar y restaurar la posición del cursor
+  let newLength = input.value.length;
+  let cursorOffset = newLength - originalLength;
+  input.setSelectionRange(start + cursorOffset, start + cursorOffset);
+}

@@ -20,8 +20,24 @@
     <div id="login-screen" class="screen active">
         <img src="logo.png" alt="Logo de la aplicacion" class="logo-login">
         <h2>Acceso Almacén Central</h2>
-        <input type="password" id="clave-input" placeholder="Clave de Administrador">
-        <button onclick="iniciarSesion()">Entrar</button>
+        <!-- NUEVO: Contenedor para la configuración de la URL de la API -->
+        <div id="api-config-container" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+            <p class="subtitle" style="margin-top: 10px; max-width: 300px; text-align: center;">Clave de acceso al entorno de trabajo en la nube.</p>
+            <input type="text" id="api-url-input" placeholder="Ingrese la clave aqui" style="width: 300px;">
+            <button onclick="guardarUrlApi()" class="btn-success">Guardar y Continuar</button>
+        </div>
+
+        <!-- MODIFICADO: Controles de sesión existentes encapsulados -->
+        <div id="login-controls-container" style="display: none; flex-direction: column; align-items: center; width: 100%;">
+            <input type="password" id="clave-input" placeholder="Clave de Administrador">
+            <button onclick="iniciarSesion()">Entrar</button>
+
+            <!-- Botón para restablecer la API -->
+                        <button onclick="restablecerUrlApi()" style="background: none; border: none; color: #6c757d; font-size: 0.85rem; margin-top: 25px; text-decoration: underline; padding: 5px; box-shadow: none;">
+                            ⚙️ Cambiar clave de entorno
+                        </button>
+        </div>
+
     </div>
 
     <div id="almacen-screen" class="screen">
@@ -255,12 +271,12 @@
                     
                     <div class="form-group">
                         <label>Costo (Inversión):</label>
-                        <input type="number" id="prod-inversion" placeholder="0.00" step="0.01">
-                    </div>
+                        <input type="text" id="prod-inversion" class="input-importe" placeholder="0.00" oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
+                    </div>                                                             
                     <div class="form-group">
                         <label>Precio de Venta:</label>
-                        <input type="number" id="prod-precio" placeholder="0.00" step="0.01">
-                    </div>
+                        <input type="text" id="prod-precio" class="input-importe" placeholder="0.00" oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
+                    </div>                                                           
                     <div class="form-group">
                         <label>Stock Inicial (En Almacén):</label>
                         <input type="number" id="prod-stock" placeholder="0" min="0">
@@ -288,12 +304,12 @@
 
             <div class="form-group">
                 <label>Nuevo Costo (Inversión):</label>
-                <input type="number" id="edit-prod-inversion" step="0.01">
-            </div>
+                <input type="text" id="edit-prod-inversion" class="input-importe" placeholder="0.00" oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
+            </div>                                                
             <div class="form-group">
                 <label>Nuevo Precio de Venta:</label>
-                <input type="number" id="edit-prod-precio" step="0.01">
-            </div>
+                <input type="text" id="edit-prod-precio" class="input-importe" placeholder="0.00" oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
+            </div>            
             <!-- NUEVO CAMPO: Edición de Stock Mínimo -->
             <div class="form-group">
                 <label>Nuevo Stock Mínimo (Alerta):</label>
