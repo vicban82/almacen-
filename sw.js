@@ -1,4 +1,4 @@
-const CACHE_NAME = 'almacen-v221';
+const CACHE_NAME = 'almacen-v221'; // Incrementa esto cada vez que hagas cambios
 const ASSETS = [
     './',
     './index.html',
@@ -8,23 +8,53 @@ const ASSETS = [
     './logo.png',
 ];
 
-// Instalar y guardar en caché
+// 1. Instalar y forzar al SW entrante a convertirse en el SW activo inmediatamente
 self.addEventListener('install', event => {
+    self.skipWaiting(); // No esperar a que se cierren las pestañas viejas
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
     );
 });
 
-// Interceptar peticiones (Cache falling back to network)
+// 2. Activar y LIMPIAR las cachés antiguas de versiones anteriores (ej. almacen-v220)
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cache => {
+                    if (cache !== CACHE_NAME) {
+                        console.log('Eliminando caché antigua:', cache);
+                        return caches.delete(cache);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim()) // Tomar control de las páginas inmediatamente
+    );
+});
+
+// 3. Interceptar peticiones (Estrategia Network First para código de la app)
 self.addEventListener('fetch', event => {
-    // Excluir peticiones a la API de Google Apps Script
+    // Excluir peticiones a Google Apps Script
     if (event.request.url.includes('script.google.com')) {
         return; 
     }
 
     event.respondWith(
-        caches.match(event.request).then(response => {
-            return response || fetch(event.request);
-        })
+        // Intentar obtener de la red primero para tener siempre la última versión
+        fetch(event.request)
+            .then(networkResponse => {
+                // Si la red responde bien, actualizamos la caché y devolvemos la respuesta
+                if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+                    const responseClone = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, responseClone);
+                    });
+                }
+                return networkResponse;
+            })
+            .catch(() => {
+                // Si NO hay red (Offline), usamos la versión guardada en caché
+                return caches.match(event.request);
+            })
     );
 });

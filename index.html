@@ -61,114 +61,13 @@
 
         <main class="almacen-layout">
             <section class="panel-izquierdo">
-                <div class="card">
-                    <h4>Transferir a TPV</h4>
-                    <div class="form-group">
-                        <label>Producto a transferir:</label>
-                        <select id="trans-producto"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Cantidad:</label>
-                        <input type="number" id="trans-cantidad" min="1" placeholder="Ej. 10">
-                    </div>
-                    <div class="form-group">
-                        <label>Destino:</label>
-                        <select id="trans-destino">
-                            <option value="TPV_1">TPV_1</option>
-                            <option value="TPV_2">TPV_2</option>
-                            <option value="TPV_3">TPV_3</option>
-                        </select>
-                    </div>
-                    <button onclick="ejecutarTransferencia()" class="btn-warning">Enviar a TPV</button>
-                </div>
-
-                <div class="card mt-20" style="border-top: 4px solid var(--success-color);">
-                    <h4 style="color: var(--success-color);">📥 Registrar Entrada de Mercancía (Proveedor)</h4>
-                    <p class="subtitle">Aumentar stock por compra o reabastecimiento directo del proveedor</p>
-
-                    <div class="form-group">
-                        <label>Producto recibido:</label>
-                        <select id="prov-producto"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Cantidad recibida:</label>
-                        <input type="number" id="prov-cantidad" min="1" placeholder="Ej. 50">
-                    </div>
-                    <div class="form-group">
-                        <label>Proveedor / Nro. Factura / Nota:</label>
-                        <input type="text" id="prov-motivo" placeholder="Ej. Distribuidor Central - Factura #991">
-                    </div>
-                    <button onclick="ejecutarEntradaProveedor()" class="btn-success"
-                        style="margin-top: 5px; width: 100%;">Registrar Entrada de Proveedor</button>
-                </div>
-
-
-                <div class="card mt-20" style="border-top: 4px solid var(--danger-color);">
-                    <h4 style="color: var(--danger-color);">📉 Registrar Salida / Merma</h4>
-                    <p class="subtitle">Descontar stock por daño, caducidad o ajuste</p>
-
-                    <div class="form-group">
-                        <label>Producto afectado:</label>
-                        <select id="merma-producto"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Cantidad a dar de baja:</label>
-                        <input type="number" id="merma-cantidad" min="1" placeholder="Ej. 2">
-                    </div>
-                    <div class="form-group">
-                        <label>Motivo o justificación:</label>
-                        <input type="text" id="merma-motivo" placeholder="Ej. Producto caducado / Dañado">
-                    </div>
-                    <button onclick="ejecutarMerma()" class="btn-warning"
-                        style="background-color: var(--danger-color); color: white;">Registrar Baja Definitiva</button>
-                </div>
-
-
                 <div class="card mt-20">
                     <h4>Inventario Actual (Almacén)</h4>
                     <input type="text" id="buscar-producto" placeholder="Buscar..." onkeyup="filtrarCatalogo()">
                     <div id="catalogo-container" class="inventario-lista">
                     </div>
                 </div>
-                <!-- Añadir en la sección "panel-derecho" o donde prefieras -->
                 <div class="card card-primary mt-20">
-                    <h4>🤖 Asistente IA de Compras</h4>
-                    <p class="subtitle">Analiza el stock crítico y genera sugerencias de pedido.</p>
-                    <button onclick="solicitarAnalisisIA()" class="btn-primary" style="width: 100%;">
-                        Generar Análisis Predictivo
-                    </button>
-
-                    <!-- Contenedor para mostrar la respuesta -->
-                    <div id="resultado-ia"
-                        style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px; display: none; font-size: 0.9rem; white-space: pre-wrap;">
-                    </div>
-                </div>
-                <!-- CHATBOT NLP - Añadir en el panel izquierdo o derecho -->
-                <div class="card mt-20" style="border-top: 4px solid #6f42c1;">
-                    <h4 style="color: #6f42c1;">💬 Chatbot de Inventario</h4>
-                    <p class="subtitle">Pregunta en lenguaje natural sobre stock o precios.</p>
-
-                    <div class="form-group">
-                        <input type="text" id="chat-nlp-input"
-                            placeholder='Ej: "¿Cuántas bolsas de arroz quedan en TPV_1 y a qué precio?"'
-                            onkeypress="manejarEnterChat(event)" style="border-color: #e0d4f5;">
-                    </div>
-
-                    <button onclick="consultarChatbotNLP()" class="btn-primary"
-                        style="width: 100%; background-color: #6f42c1; border-color: #6f42c1;">
-                        Preguntar al Asistente
-                    </button>
-
-                    <!-- Contenedor para la respuesta de la IA -->
-                    <div id="chat-nlp-resultado"
-                        style="margin-top: 15px; padding: 12px; background: #f8f5ff; border-left: 4px solid #6f42c1; border-radius: 4px; display: none; font-size: 0.95rem; white-space: pre-wrap; line-height: 1.4;">
-                    </div>
-                </div>
-
-            </section>
-
-            <section class="panel-derecho">
-                <div class="card card-primary">
                     <h4>Crear Nuevo Producto</h4>
                     <p class="subtitle">Registrar en la base de datos maestra</p>
 
@@ -297,17 +196,116 @@
                 </div>
             </section>
 
-            <!-- ACCIÓN CRÍTICA: LIMPIAR BASE DE DATOS -->
-            <div class="card mt-20" style="border-top: 4px solid var(--danger-color); grid-column: 1 / -1;">
-                <h4 style="color: var(--danger-color);">⚠️ Acción Crítica: Depuración de Sistema</h4>
-                <p class="subtitle">¿Es consciente que está a punto de limpiar todos los registros de la base de datos?.</p>
-                <p><strong>Esta acción es irreversible.</strong></p>
-                <button onclick="iniciarLimpiezaBD()" class="btn-warning"
-                    style="background-color: var(--danger-color); color: white; width: 100%; margin-top: 10px;">
-                    Limpiar Base de Datos
-                </button>
-            </div>
+            <section class="panel-derecho">
+                <div class="card card-primary mt-20">
+                    <h4>Transferir a TPV</h4>
+                    <div class="form-group">
+                        <label>Producto a transferir:</label>
+                        <select id="trans-producto"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad:</label>
+                        <input type="number" id="trans-cantidad" min="1" placeholder="Ej. 10">
+                    </div>
+                    <div class="form-group">
+                        <label>Destino:</label>
+                        <select id="trans-destino">
+                            <option value="TPV_1">TPV_1</option>
+                            <option value="TPV_2">TPV_2</option>
+                            <option value="TPV_3">TPV_3</option>
+                        </select>
+                    </div>
+                    <button onclick="ejecutarTransferencia()" class="btn-warning">Enviar a TPV</button>
+                </div>
 
+                <div class="card mt-20" style="border-top: 4px solid var(--success-color);">
+                    <h4 style="color: var(--success-color);">📥 Registrar Entrada de Mercancía (Proveedor)</h4>
+                    <p class="subtitle">Aumentar stock por compra o reabastecimiento directo del proveedor</p>
+
+                    <div class="form-group">
+                        <label>Producto recibido:</label>
+                        <select id="prov-producto"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad recibida:</label>
+                        <input type="number" id="prov-cantidad" min="1" placeholder="Ej. 50">
+                    </div>
+                    <div class="form-group">
+                        <label>Proveedor / Nro. Factura / Nota:</label>
+                        <input type="text" id="prov-motivo" placeholder="Ej. Distribuidor Central - Factura #991">
+                    </div>
+                    <button onclick="ejecutarEntradaProveedor()" class="btn-success"
+                        style="margin-top: 5px; width: 100%;">Registrar Entrada de Proveedor</button>
+                </div>
+                <div class="card mt-20" style="border-top: 4px solid var(--danger-color);">
+                    <h4 style="color: var(--danger-color);">📉 Registrar Salida / Merma</h4>
+                    <p class="subtitle">Descontar stock por daño, caducidad o ajuste</p>
+
+                    <div class="form-group">
+                        <label>Producto afectado:</label>
+                        <select id="merma-producto"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad a dar de baja:</label>
+                        <input type="number" id="merma-cantidad" min="1" placeholder="Ej. 2">
+                    </div>
+                    <div class="form-group">
+                        <label>Motivo o justificación:</label>
+                        <input type="text" id="merma-motivo" placeholder="Ej. Producto caducado / Dañado">
+                    </div>
+                    <button onclick="ejecutarMerma()" class="btn-warning"
+                        style="background-color: var(--danger-color); color: white;">Registrar Baja Definitiva</button>
+                </div>
+
+                <!-- Añadir en la sección "panel-derecho" o donde prefieras -->
+                <div class="card card-primary mt-20">
+                    <h4>🤖 Asistente IA de Compras</h4>
+                    <p class="subtitle">Analiza el stock crítico y genera sugerencias de pedido.</p>
+                    <button onclick="solicitarAnalisisIA()" class="btn-primary" style="width: 100%;">
+                        Generar Análisis Predictivo
+                    </button>
+
+                    <!-- Contenedor para mostrar la respuesta -->
+                    <div id="resultado-ia"
+                        style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px; display: none; font-size: 0.9rem; white-space: pre-wrap;">
+                    </div>
+                </div>
+                <!-- CHATBOT NLP - Añadir en el panel izquierdo o derecho -->
+                <div class="card mt-20" style="border-top: 4px solid #6f42c1;">
+                    <h4 style="color: #6f42c1;">💬 Chatbot de Inventario</h4>
+                    <p class="subtitle">Pregunta en lenguaje natural sobre stock o precios.</p>
+
+                    <div class="form-group">
+                        <input type="text" id="chat-nlp-input"
+                            placeholder='Ej: "¿Cuántas bolsas de arroz quedan en TPV_1 y a qué precio?"'
+                            onkeypress="manejarEnterChat(event)" style="border-color: #e0d4f5;">
+                    </div>
+
+                    <button onclick="consultarChatbotNLP()" class="btn-primary"
+                        style="width: 100%; background-color: #6f42c1; border-color: #6f42c1;">
+                        Preguntar al Asistente
+                    </button>
+
+                    <!-- Contenedor para la respuesta de la IA -->
+                    <div id="chat-nlp-resultado"
+                        style="margin-top: 15px; padding: 12px; background: #f8f5ff; border-left: 4px solid #6f42c1; border-radius: 4px; display: none; font-size: 0.95rem; white-space: pre-wrap; line-height: 1.4;">
+                    </div>
+                </div>
+
+                <!-- ACCIÓN CRÍTICA: LIMPIAR BASE DE DATOS -->
+                <div class="card mt-20" style="border-top: 4px solid var(--danger-color); grid-column: 1 / -1;">
+                    <h4 style="color: var(--danger-color);">⚠️ Acción Crítica: Depuración de Sistema</h4>
+                    <p class="subtitle">¿Es consciente que está a punto de limpiar todos los registros de la base de
+                        datos?.
+                    </p>
+                    <p><strong>Esta acción es irreversible.</strong></p>
+                    <button onclick="iniciarLimpiezaBD()" class="btn-warning"
+                        style="background-color: var(--danger-color); color: white; width: 100%; margin-top: 10px;">
+                        Limpiar Base de Datos
+                    </button>
+                </div>
+
+            </section>
 
         </main>
     </div>
@@ -329,12 +327,6 @@
                 <input type="text" id="edit-prod-precio" class="input-importe" placeholder="0.00"
                     oninput="formatearMonedaEnVivo(this)" onblur="formatearImporteContable(this)">
             </div>
-            <!-- NUEVO CAMPO: Edición de Stock Mínimo -->
-            <div class="form-group">
-                <label>Nuevo Stock Mínimo (Alerta):</label>
-                <input type="number" id="edit-prod-stock-minimo" min="0">
-            </div>
-
             <!-- NUEVO CAMPO: Edición de Stock Mínimo -->
             <div class="form-group">
                 <label>Nuevo Stock Mínimo (Alerta):</label>
@@ -648,8 +640,6 @@
             </div>
         </div>
     </div>
-
-
 
     <script>
         if ('serviceWorker' in navigator) {
