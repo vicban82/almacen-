@@ -23,19 +23,47 @@ function inicializarUIConfiguracion() {
   }
 }
 
-function guardarUrlApi() {
+async function guardarUrlApi() {
   const urlInput = document.getElementById("api-url-input").value.trim();
   
-  if (!urlInput || !urlInput.startsWith("https://script.google.com/")) {
-      return mostrarAlerta("Por favor, ingrese una URL válida de Google Apps Script.", "Atención");
+  if (!urlInput) {
+      return mostrarAlerta("Por favor, ingrese la clave de acceso.", "Atención");
   }
 
-  API_URL = urlInput;
-  localStorage.setItem("api_url_almacen", API_URL);
-  inicializarUIConfiguracion();
-  chequearInternet(); // Chequeo inicial ahora que tenemos URL
-  mostrarAlerta("URL de conexión configurada con éxito.", "Configuración Guardada");
+  // 1. Limpiamos la entrada por si el usuario pega la URL completa accidentalmente
+  let cleanId = urlInput.replace("https://script.google.com/macros/s/", "").replace("/exec", "");
+  
+  // 2. Concatenamos las cadenas solicitadas al inicio y al final
+  const urlCompleta = "https://script.google.com/macros/s/" + cleanId + "/exec";
+
+  mostrarLoading("Verificando clave de acceso con la base de datos...");
+
+  try {
+      // 3. Hacemos el "ping" de verificación al servidor (Google Sheet)
+      const response = await fetch(urlCompleta, {
+          method: "POST",
+          body: JSON.stringify({ action: "ping" }),
+      });
+      
+      const data = await response.json();
+
+      // 4. Si la verificación es exitosa, guardamos la URL y configuramos el entorno
+      if (data.success) {
+          API_URL = urlCompleta;
+          localStorage.setItem("api_url_almacen", API_URL);
+          inicializarUIConfiguracion();
+          chequearInternet(); // Chequeo inicial ahora que tenemos URL
+          mostrarAlerta("Clave de conexión verificada y configurada con éxito.", "Configuración Guardada");
+      } else {
+          mostrarAlerta("La clave proporcionada no es válida o el servidor rechazó la conexión.", "Error de Verificación");
+      }
+  } catch (error) {
+      mostrarAlerta("No se pudo conectar con el servidor. Compruebe su clave y su conexión a internet.", "Error de Red");
+  } finally {
+      ocultarLoading();
+  }
 }
+
 
 function restablecerUrlApi() {
   mostrarConfirmacion(
@@ -154,6 +182,7 @@ function cerrarModalAlerta() {
 
 let catalogoLocal = [];
 let instanciaActual = "Almacen";
+let categoriaSeleccionada = "";
 
 function mostrarLoading(mensaje = "Procesando...") {
   document.getElementById("loading-text").innerText = mensaje;
@@ -278,33 +307,77 @@ async function cargarCatalogo() {
   }
 }
 
+// NUEVA FUNCIÓN: Extrae y renderiza el carrusel
+function renderizarCategorias() {
+    const contenedor = document.getElementById("categorias-carousel");
+    if (!contenedor) return;
+    
+    contenedor.innerHTML = "";
+    
+    // Extraer categorías únicas del catálogo local, omitiendo vacías
+    const categorias = [...new Set(catalogoLocal.map(p => p.division).filter(d => d))];
+    
+    // Botón para mostrar "Todas"
+    const btnTodas = document.createElement("button");
+    btnTodas.className = `btn-categoria ${categoriaSeleccionada === "" ? "active" : ""}`;
+    btnTodas.innerText = "Todas";
+    btnTodas.onclick = () => seleccionarCategoria("");
+    contenedor.appendChild(btnTodas);
+    
+    // Generar botones para cada categoría alfabéticamente
+    categorias.sort().forEach(cat => {
+        const btn = document.createElement("button");
+        btn.className = `btn-categoria ${categoriaSeleccionada === cat ? "active" : ""}`;
+        btn.innerText = cat;
+        btn.onclick = () => seleccionarCategoria(cat);
+        contenedor.appendChild(btn);
+    });
+}
+
+function seleccionarCategoria(categoria) {
+  categoriaSeleccionada = categoria;
+  renderizarCategorias(); // Refresca para aplicar la clase 'active' al botón correcto
+  filtrarCatalogo();      // Aplica el filtro en la lista
+}
+
+
+
+
 function renderizarCatalogo() {
   const contenedor = document.getElementById("catalogo-container");
   contenedor.innerHTML = "";
 
-  catalogoLocal.forEach((prod) => {
-    const minAlerta = Number(prod.stock_minimo) || 0;
-    const stockActual = Number(prod.existencia) || 0;
+  // 1. Renderizar los botones del carrusel basado en el catálogo actual
+  renderizarCategorias();
 
-    const item = document.createElement("div");
-    item.className = "inventario-item";
-    item.innerHTML = `
-            <div>
-                <strong>${prod.nombre}</strong> <small>(${prod.id})</small><br>
-                <span class="stock-badge ${
-                  minAlerta > 0 && stockActual <= minAlerta ? "bajo-stock" : ""
-                }">Stock: ${stockActual}</span>
-            </div>
-            <div class="precios" style="text-align: right;">
-                Costo: $${prod.inversion} | Venta: $${prod.precio}<br>
-                <button class="btn-edit" onclick="abrirModalEdicion('${
-                  prod.id
-                }')">✏️ Editar</button>
-            </div>
-        `;
-    contenedor.appendChild(item);
+  catalogoLocal.forEach((prod) => {
+      const minAlerta = Number(prod.stock_minimo) || 0;
+      const stockActual = Number(prod.existencia) || 0;
+      const division = prod.division || ""; // Asegurar que no sea undefined
+
+      const item = document.createElement("div");
+      item.className = "inventario-item";
+      // Atributo data para que filtrarCatalogo() sepa a qué categoría pertenece
+      item.dataset.categoria = division; 
+      item.innerHTML = `
+          <div>
+              <strong>${prod.nombre}</strong> <small>(${prod.id})</small><br>
+              <span class="stock-badge ${
+                minAlerta > 0 && stockActual <= minAlerta ? "bajo-stock" : ""
+              }">Stock: ${stockActual}</span>
+          </div>
+          <div class="precios" style="text-align: right;">
+              Costo: $${prod.inversion} | Venta: $${prod.precio}<br>
+              <button class="btn-edit" onclick="abrirModalEdicion('${prod.id}')">✏️ Editar</button>
+          </div>
+      `;
+      contenedor.appendChild(item);
   });
+  
+  // 2. Aplicar el filtro visual en caso de que ya hubiese uno seleccionado al recargar
+  filtrarCatalogo();
 }
+
 
 function actualizarSelectTransferencias() {
   const select = document.getElementById("trans-producto");
@@ -334,13 +407,23 @@ function actualizarSelectTransferencias() {
   });
 }
 
+// MODIFICACIÓN: Actualizar filtrarCatalogo para que evalúe Búsqueda + Categoría simultáneamente
 function filtrarCatalogo() {
   const texto = document.getElementById("buscar-producto").value.toLowerCase();
   const items = document.querySelectorAll(".inventario-item");
   items.forEach((item) => {
     const nombre = item.querySelector("strong").innerText.toLowerCase();
-    item.style.display = nombre.includes(texto) ? "flex" : "none";
-  });
+    const categoriaItem = item.dataset.categoria || "";
+    
+    // Criterio 1: Coincide el texto
+    const coincideTexto = nombre.includes(texto);
+    
+    // Criterio 2: Coincide la categoría (o está en "Todas")
+    const coincideCategoria = (categoriaSeleccionada === "" || categoriaItem === categoriaSeleccionada);
+    
+    // Se muestra solo si pasa ambos filtros
+    item.style.display = (coincideTexto && coincideCategoria) ? "flex" : "none";
+});
 }
 
 // ==========================================

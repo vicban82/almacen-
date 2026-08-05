@@ -429,3 +429,52 @@ button:hover { background-color: var(--primary-hover); }
     text-align: right !important;
     font-variant-numeric: tabular-nums; /* Asegura que los números ocupen el mismo ancho */
 }
+
+
+/* ==========================================
+   CARRUSEL DE CATEGORÍAS (INVENTARIO)
+   ========================================== */
+   .categorias-carousel-wrapper {
+    position: relative;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.categorias-carousel {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding-bottom: 5px;
+    /* Ocultar scrollbar en Firefox */
+    scrollbar-width: none; 
+}
+
+/* Ocultar scrollbar en Chrome, Safari y Edge */
+.categorias-carousel::-webkit-scrollbar {
+    display: none; 
+}
+
+.btn-categoria {
+    background-color: #e9ecef;
+    color: #495057;
+    border: 1px solid #ced4da;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    width: auto;
+    margin: 0;
+}
+
+.btn-categoria:hover {
+    background-color: #dee2e6;
+}
+
+.btn-categoria.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    font-weight: bold;
+}
