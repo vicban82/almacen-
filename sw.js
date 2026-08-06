@@ -1,4 +1,4 @@
-const CACHE_NAME = 'almacen-v231'; // Incrementa esto cada vez que hagas cambios
+const CACHE_NAME = 'almacen-v221'; // Incrementa esto cada vez que hagas cambios
 const ASSETS = [
     './',
     './index.html',
@@ -35,8 +35,8 @@ self.addEventListener('activate', event => {
 // 3. Interceptar peticiones (Estrategia Network First para código de la app)
 self.addEventListener('fetch', event => {
     // Excluir peticiones a Google Apps Script
-    if (event.request.url.includes('script.google.com')) {
-        return; 
+    if (event.request.url.includes('script.google.com') || event.request.url.includes('google.com/favicon.ico')) {
+        return;     
     }
 
     event.respondWith(
